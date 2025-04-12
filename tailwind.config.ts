@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,12 +62,23 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Neo-brutalist theme colors
+				"neo-black": "#1A1F2C",
+				"neo-gray": "#403E43",
+				"neo-white": "#FFFFFF",
+				"neo-red": "#FF5252",
+				"neo-yellow": "#FFD600",
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			boxShadow: {
+				'neo': '5px 5px 0px 0px rgba(0,0,0,1)',
+				'neo-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
+				'neo-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
 			},
 			keyframes: {
 				'accordion-down': {
