@@ -1,5 +1,6 @@
 
 import { Capacitor } from "@capacitor/core";
+import { Permissions } from "@capacitor/core";
 
 export interface SmsMessage {
   id: string;
@@ -33,13 +34,22 @@ class SmsReader {
     }
 
     try {
-      // On a real implementation, we would use a Capacitor plugin for SMS permissions
-      // Since there isn't an official SMS plugin, this is where you'd implement
-      // a custom plugin or use a community plugin
+      // Use Capacitor's native Permissions API to request SMS access
+      const permissionStatus = await Permissions.query({ name: 'sms' });
       
-      console.log("Requesting SMS permission");
-      this.hasPermission = true;
-      return true;
+      if (permissionStatus.state === 'granted') {
+        this.hasPermission = true;
+        return true;
+      }
+      
+      if (permissionStatus.state === 'prompt') {
+        const requestResult = await Permissions.request({ name: 'sms' });
+        this.hasPermission = requestResult.state === 'granted';
+        return this.hasPermission;
+      }
+      
+      console.log("SMS permission denied");
+      return false;
     } catch (error) {
       console.error("Error requesting SMS permission:", error);
       return false;
@@ -53,13 +63,14 @@ class SmsReader {
     }
 
     try {
-      // In a real implementation, we would use a Capacitor plugin to read SMS
-      // Since we don't have one yet, we'll return sample data
+      // In a real implementation, this would use a native plugin to read SMS
+      // For example, you'd use a Cordova plugin through Capacitor or a custom native plugin
       console.log("Reading SMS messages");
       
-      // In real implementation, this would call the native plugin
+      // Simulating API call to the native layer
       return await new Promise(resolve => {
-        // Simulating API call delay
+        // This is where you would implement the actual SMS reading logic
+        // using a custom native plugin or implementation
         setTimeout(() => {
           resolve(this.getSampleData());
         }, 1000);

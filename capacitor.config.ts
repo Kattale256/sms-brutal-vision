@@ -10,7 +10,9 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   plugins: {
-    // Configure any plugins here
+    Permissions: {
+      sms: true
+    }
   }
 };
 
