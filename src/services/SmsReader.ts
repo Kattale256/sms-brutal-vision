@@ -46,7 +46,13 @@ class SmsReader {
     }
 
     try {
-      const { Permissions } = Capacitor.Plugins || {};
+      // Fix the Plugins access
+      if (!Capacitor.Plugins) {
+        console.log("Permissions plugin not available");
+        return false;
+      }
+      
+      const { Permissions } = Capacitor.Plugins;
       
       if (!Permissions) {
         console.log("Permissions plugin not available");
@@ -87,9 +93,16 @@ class SmsReader {
         console.log("SmsReader plugin is available");
         
         try {
-          const plugins = Capacitor.Plugins || {};
-          if (plugins.SmsReader) {
-            const result = await plugins.SmsReader.getSmsMessages({
+          // Fix the Plugins access
+          if (!Capacitor.Plugins) {
+            console.log("Plugins not available");
+            return [];
+          }
+          
+          const { SmsReader } = Capacitor.Plugins;
+          
+          if (SmsReader) {
+            const result = await SmsReader.getSmsMessages({
               maxCount: 100,
               contentUri: "content://sms/inbox"
             });
@@ -115,8 +128,8 @@ class SmsReader {
   }
 
   public parseTransactionsFromText(text: string): Transaction[] {
-    // Split text by new lines in case multiple messages were pasted
-    const messages = text.split(/\n\n+/).filter(msg => msg.trim().length > 0);
+    // Split text by multiple messages - adapted for Airtel format which may be concatenated
+    const messages = text.split(/(?=SENT|RECEIVED|PAID|You have sent|You have received)/i).filter(msg => msg.trim().length > 0);
     
     console.log(`Parsing ${messages.length} messages`);
     
@@ -137,9 +150,9 @@ class SmsReader {
     // Convert to lowercase for easier pattern matching
     const lowerMessage = message.toLowerCase();
     
-    // Identify transaction type
+    // Identify transaction type - updated for Airtel format
     let type: Transaction['type'] = 'other';
-    if (lowerMessage.includes('sent') || lowerMessage.includes('send') || lowerMessage.includes('transferred')) {
+    if (lowerMessage.includes('sent') || lowerMessage.includes('send')) {
       type = 'send';
     } else if (lowerMessage.includes('received') || lowerMessage.includes('receive')) {
       type = 'receive';
@@ -151,73 +164,66 @@ class SmsReader {
       type = 'deposit';
     }
     
-    // Extract amount using regex
-    // Look for currency symbols or codes followed by numbers
-    const amountRegex = /(?:[$£€]|USD|EUR|GBP)\s*([0-9,.]+)|([0-9,.]+)\s*(?:[$£€]|USD|EUR|GBP)/i;
+    // Extract amount using regex - updated for Airtel format (UGX X,XXX)
+    const amountRegex = /(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
     const amountMatch = message.match(amountRegex);
     
     if (!amountMatch) {
-      console.log("Could not extract amount from message");
+      console.log("Could not extract amount from message:", message);
       return null;
     }
     
-    const amountStr = (amountMatch[1] || amountMatch[2]).replace(/,/g, '');
+    const amountStr = amountMatch[1].replace(/,/g, '');
     const amount = parseFloat(amountStr);
     
-    // Extract currency
-    let currency = 'USD'; // Default
-    if (message.includes('$') || message.includes('USD')) {
-      currency = 'USD';
-    } else if (message.includes('€') || message.includes('EUR')) {
-      currency = 'EUR';
-    } else if (message.includes('£') || message.includes('GBP')) {
-      currency = 'GBP';
+    // Extract currency - updated for East African currencies
+    let currency = 'UGX'; // Default for Uganda
+    if (message.includes('UGX')) {
+      currency = 'UGX';
+    } else if (message.includes('KES')) {
+      currency = 'KES';
+    } else if (message.includes('TZS')) {
+      currency = 'TZS';
     }
     
-    // Extract sender/recipient using regex for names or phone numbers
-    const phoneRegex = /[+]?[\d]{10,15}/g;
-    const phoneMatches = message.match(phoneRegex);
+    // Extract recipient - updated for Airtel format (to NAME on PHONENUMBER)
+    let recipient;
+    const recipientRegex = /to\s+([^\.]+?)\s+on\s+(\d+)/i;
+    const recipientMatch = message.match(recipientRegex);
+    if (recipientMatch) {
+      recipient = recipientMatch[1];
+    }
     
-    // Extract reference
-    const referenceRegex = /ref(?:erence)?:?\s*([A-Z0-9]+)/i;
-    const referenceMatch = message.match(referenceRegex);
-    const reference = referenceMatch ? referenceMatch[1] : undefined;
+    // Extract phone number
+    const phoneRegex = /on\s+(\d+)/i;
+    const phoneMatch = message.match(phoneRegex);
+    const phone = phoneMatch ? phoneMatch[1] : undefined;
     
-    // Extract balance - common pattern: "Balance: $X" or "New Balance: $X"
-    const balanceRegex = /(?:new\s+)?balance:?\s*(?:[$£€]|USD|EUR|GBP)?\s*([0-9,.]+)/i;
-    const balanceMatch = message.match(balanceRegex);
-    const balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
-    
-    // Extract fee - common pattern: "Fee: $X"
-    const feeRegex = /fee:?\s*(?:[$£€]|USD|EUR|GBP)?\s*([0-9,.]+)/i;
+    // Extract fee - updated for Airtel format (Fee UGX X.X)
+    const feeRegex = /Fee\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
     const feeMatch = message.match(feeRegex);
     const fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
     
-    // Extract date from the message
-    const dateRegex = /(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{1,2}-\d{1,2}-\d{2,4}|\d{1,2} [A-Za-z]{3} \d{2,4})/i;
-    const dateMatch = message.match(dateRegex);
+    // Extract balance - updated for Airtel format (Bal UGX X,XXX)
+    const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+    const balanceMatch = message.match(balanceRegex);
+    const balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
     
-    // Extract time from the message
-    const timeRegex = /(\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)/i;
-    const timeMatch = message.match(timeRegex);
+    // Extract reference - updated for Airtel format (TID XXXXXXXXX)
+    const referenceRegex = /TID\s+([0-9]+)/i;
+    const referenceMatch = message.match(referenceRegex);
+    const reference = referenceMatch ? referenceMatch[1] : undefined;
     
-    // Combine date and time if available, or use current date
-    let timestamp;
-    if (dateMatch && timeMatch) {
-      timestamp = new Date(`${dateMatch[1]} ${timeMatch[1]}`).toISOString();
-    } else if (dateMatch) {
-      timestamp = new Date(dateMatch[1]).toISOString();
-    } else {
-      timestamp = new Date().toISOString();
-    }
+    // Use current timestamp as we don't have date in the sample message
+    const timestamp = new Date().toISOString();
     
     return {
       id,
       type,
       amount,
       currency,
-      sender: type === 'receive' && phoneMatches ? phoneMatches[0] : undefined,
-      recipient: type === 'send' && phoneMatches ? phoneMatches[0] : undefined,
+      recipient,
+      sender: undefined, // Not available in the provided format
       fee,
       balance,
       reference,
@@ -239,22 +245,22 @@ class SmsReader {
     return [
       {
         id: '1',
-        sender: 'MPESA',
-        content: 'Transaction confirmed. You have sent $100.00 to John Doe on 12/04/2023 at 14:35. Transaction fee: $0.50. Your new balance is $1,245.60. Reference: TX789012.',
+        sender: 'Airtel Money',
+        content: 'SENT UGX 4,000 to KASUBO DEBORAH PRISCILLA on 256780536411. Fee UGX 100.0 Bal UGX 93,042. TID 121346546521. Send using MyAirtel App https://bit.ly/3ZgpiNw',
         timestamp: new Date().toISOString(),
         category: 'finance'
       },
       {
         id: '2',
-        sender: 'MobileMoney',
-        content: 'You have received $75.25 from Jane Smith. Your new balance is $1,320.85. Reference: RX567890. Transaction completed on 12/04/2023 at 15:40.',
+        sender: 'Airtel Money',
+        content: 'SENT UGX 4,000 to KASUBO DEBORAH PRISCILLA on 256780536411. Fee UGX 100.0 Bal UGX 97,142. TID 121346498791. Send using MyAirtel App https://bit.ly/3ZgpiNw',
         timestamp: new Date().toISOString(),
         category: 'finance'
       },
       {
         id: '3',
-        sender: 'PayService',
-        content: 'Payment of $32.40 to ACME Store completed. Fee: $0.30. Balance: $1,288.15. Date: 12/04/2023, Time: 16:20. Ref: PS123456',
+        sender: 'Airtel Money',
+        content: 'SENT UGX 4,000 to KASUBO DEBORAH PRISCILLA on 256780536411. Fee UGX 100.0 Bal UGX 101,242. TID 121346442636. Send using MyAirtel App https://bit.ly/3ZgpiNw',
         timestamp: new Date().toISOString(),
         category: 'finance'
       }

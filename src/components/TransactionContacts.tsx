@@ -2,6 +2,7 @@
 import React from 'react';
 import { Transaction } from '../services/SmsReader';
 import { getFrequentContacts, getAverageTransactionAmount } from '../utils/transactionAnalyzer';
+import { ArrowUpRight, ArrowDownRight, CreditCard, Banknote } from 'lucide-react';
 
 interface TransactionContactsProps {
   transactions: Transaction[];
@@ -26,7 +27,17 @@ const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions 
   transactions.forEach(t => {
     currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
   });
-  const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
+  const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'UGX';
+
+  // Icons for transaction types
+  const typeIcons = {
+    send: <ArrowUpRight className="h-5 w-5" />,
+    receive: <ArrowDownRight className="h-5 w-5" />,
+    payment: <CreditCard className="h-5 w-5" />,
+    withdrawal: <Banknote className="h-5 w-5" />,
+    deposit: <Banknote className="h-5 w-5" />,
+    other: <CreditCard className="h-5 w-5" />
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -58,9 +69,12 @@ const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions 
             .filter(([_, amount]) => amount > 0)
             .map(([type, average]) => (
               <div key={type} className="flex justify-between items-center border-b-2 border-neo-black pb-2">
-                <span className="font-medium">
-                  {typeLabels[type as keyof typeof typeLabels]}
-                </span>
+                <div className="flex items-center">
+                  {typeIcons[type as keyof typeof typeIcons]}
+                  <span className="font-medium ml-2">
+                    {typeLabels[type as keyof typeof typeLabels]}
+                  </span>
+                </div>
                 <div className="text-xl font-bold">
                   {average.toFixed(2)} {mainCurrency}
                 </div>
