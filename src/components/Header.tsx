@@ -34,7 +34,7 @@ const Header: React.FC<{
         } else {
           toast({
             title: "No messages found",
-            description: "We couldn't find any SMS messages to import.",
+            description: "We couldn't find any SMS messages to import. A custom native plugin is required for this feature.",
             variant: "destructive",
           });
         }

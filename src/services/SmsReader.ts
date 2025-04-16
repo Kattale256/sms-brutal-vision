@@ -1,6 +1,5 @@
 
 import { Capacitor } from "@capacitor/core";
-import { Filesystem, Directory } from '@capacitor/filesystem';
 
 export interface SmsMessage {
   id: string;
@@ -34,8 +33,8 @@ class SmsReader {
     }
 
     try {
-      // Use Capacitor's Permissions plugin to request SMS access
-      const { Permissions } = Capacitor;
+      // Use Capacitor's Plugins object to access Permissions plugin
+      const { Permissions } = Capacitor.Plugins;
       
       const permissionStatus = await Permissions.query({ name: 'sms' });
       
@@ -65,36 +64,34 @@ class SmsReader {
     }
 
     try {
-      // Attempt to read the SMS database from the Android filesystem
-      console.log("Reading SMS database from Android filesystem");
+      console.log("Reading SMS using ContentProvider");
       
-      // Try different known paths for the SMS database
-      const paths = [
-        "/data/data/com.android.providers.telephony/databases/mmssms.db",
-        "/data/user_de/0/com.android.providers.telephony/databases/mmssms.db"
-      ];
-      
-      for (const path of paths) {
+      // Access the registered plugin to read SMS
+      // This would normally be implemented as a custom native plugin
+      if (Capacitor.isPluginAvailable('SmsReader')) {
+        console.log("SmsReader plugin is available");
+        
         try {
-          console.log(`Attempting to read SMS from: ${path}`);
-          
-          const result = await Filesystem.readFile({
-            path: path
+          // Attempt to call the plugin
+          const result = await Capacitor.Plugins.SmsReader.getSmsMessages({
+            maxCount: 100,  // Limit to last 100 messages
+            contentUri: "content://sms/inbox" // Android ContentProvider URI for SMS inbox
           });
           
-          if (result && result.data) {
-            console.log("Successfully read SMS database");
-            // Here we would need to parse the SQLite database
-            // This would require a SQLite plugin or a way to parse the binary data
-            // For now we'll return the sample data
-            return this.parseSmsDatabase(result.data);
+          if (result && result.messages) {
+            console.log(`Successfully read ${result.messages.length} SMS messages`);
+            return this.formatSmsMessages(result.messages);
           }
-        } catch (pathError) {
-          console.log(`Failed to read from path: ${path}`, pathError);
+        } catch (pluginError) {
+          console.error("Error calling SmsReader plugin:", pluginError);
         }
+      } else {
+        console.log("SmsReader plugin is not available, native implementation required");
+        console.log("For a complete implementation, create a custom Capacitor plugin using Android's ContentResolver");
       }
       
-      console.log("Could not read SMS database from any known paths, returning sample data");
+      // Return sample data if plugin is unavailable or fails
+      console.log("Returning sample data instead");
       return this.getSampleData();
     } catch (error) {
       console.error("Error reading SMS:", error);
@@ -102,17 +99,15 @@ class SmsReader {
     }
   }
 
-  private parseSmsDatabase(data: string): SmsMessage[] {
-    // In a real implementation, this would parse the SQLite database
-    // This requires either:
-    // 1. A capacitor SQLite plugin to open and query the database
-    // 2. A way to parse the raw binary data of the SQLite file
-    
-    console.log("Parsing SMS database would happen here");
-    console.log("This requires additional native implementation with SQLite");
-    
-    // For now, return sample data
-    return this.getSampleData();
+  private formatSmsMessages(nativeMessages: any[]): SmsMessage[] {
+    // Convert the native plugin's message format to our app format
+    return nativeMessages.map((msg, index) => ({
+      id: msg.id || String(index),
+      sender: msg.address || msg.sender || 'Unknown',
+      content: msg.body || msg.content || '',
+      timestamp: msg.date ? new Date(msg.date).toISOString() : new Date().toISOString(),
+      category: undefined // To be categorized later
+    }));
   }
 
   private getSampleData(): SmsMessage[] {

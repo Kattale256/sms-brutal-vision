@@ -12,10 +12,6 @@ const config: CapacitorConfig = {
   plugins: {
     Permissions: {
       sms: true
-    },
-    Filesystem: {
-      readFilePermission: "To read your SMS messages",
-      writeFilePermission: "To process SMS data"
     }
   }
 };
