@@ -2,7 +2,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Transaction } from '../services/SmsReader';
-import { getTotalsByType, getTotalFees, getAverageTransactionAmount } from '../utils/transactionAnalyzer';
+import { getTotalsByType, getTotalFees, getTotalIncome, getAverageTransactionAmount } from '../utils/transactionAnalyzer';
 
 interface TransactionStatsProps {
   transactions: Transaction[];
@@ -11,6 +11,7 @@ interface TransactionStatsProps {
 const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => {
   const totalsByType = getTotalsByType(transactions);
   const totalFees = getTotalFees(transactions);
+  const totalIncome = getTotalIncome(transactions);
   const averageAmounts = getAverageTransactionAmount(transactions);
   
   // Format data for the chart
@@ -69,16 +70,16 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         <h2 className="text-2xl font-bold mb-4">FINANCIAL OVERVIEW</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="border-2 border-neo-black p-4">
-            <h3 className="text-lg font-bold">MONEY IN</h3>
-            <p className="text-2xl font-bold text-green-600">{totalIn.toFixed(2)} {mainCurrency}</p>
+            <h3 className="text-lg font-bold">TOTAL INCOME</h3>
+            <p className="text-2xl font-bold text-green-600">{totalIncome.toFixed(2)} {mainCurrency}</p>
+          </div>
+          <div className="border-2 border-neo-black p-4">
+            <h3 className="text-lg font-bold">TOTAL FEES</h3>
+            <p className="text-2xl font-bold text-red-600">{totalFees.toFixed(2)} {mainCurrency}</p>
           </div>
           <div className="border-2 border-neo-black p-4">
             <h3 className="text-lg font-bold">MONEY OUT</h3>
             <p className="text-2xl font-bold text-red-600">{totalOut.toFixed(2)} {mainCurrency}</p>
-          </div>
-          <div className="border-2 border-neo-black p-4">
-            <h3 className="text-lg font-bold">FEES PAID</h3>
-            <p className="text-2xl font-bold text-neo-gray">{totalFees.toFixed(2)} {mainCurrency}</p>
           </div>
           <div className="border-2 border-neo-black p-4">
             <h3 className="text-lg font-bold">BALANCE</h3>
