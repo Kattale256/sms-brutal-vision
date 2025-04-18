@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/SmsReader';
@@ -16,7 +15,6 @@ const Header: React.FC<{
 
   const handleSmsImport = async () => {
     if (smsReader.isNativePlatform()) {
-      // If on mobile, request permission and read SMS
       const hasPermission = await smsReader.requestSmsPermission();
       
       if (hasPermission) {
@@ -51,7 +49,6 @@ const Header: React.FC<{
         });
       }
     } else {
-      // If on web, show paste dialog
       setShowPasteDialog(true);
     }
   };
@@ -103,9 +100,9 @@ const Header: React.FC<{
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold tracking-tighter">
-            MONEY TRACKER
+            D1 PROJECT
           </h1>
-          <p className="text-neo-gray font-medium mt-1">Extract insights from your transaction messages</p>
+          <p className="text-neo-gray font-medium mt-1">Extract insights from mobile money transactions</p>
         </div>
         <div>
           <button 
