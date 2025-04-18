@@ -91,7 +91,7 @@ const Header: React.FC<{
   return <header className="border-b-4 border-neo-black mb-6 pb-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC</h1>
+          <h1 className="text-4xl font-bold tracking-tighter">LDC D1 PROJECT - COPY & PASTE MOMO SMS HERE >>>>>> </h1>
           <p className="text-neo-gray font-medium mt-1">African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025</p>
         </div>
         <div>
