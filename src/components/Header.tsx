@@ -92,7 +92,8 @@ const Header: React.FC<{
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC</h1>
-          <p className="text-neo-gray font-medium mt-1">An AI Tool to show you insights from your E-Payments</p>
+          <p className="text-neo-gray font-medium mt-1">An AI Tool to show you insights from your E-Payments
+[Research Project (c) 2025]</p>
         </div>
         <div>
           <button className="neo-button bg-neo-yellow flex items-center gap-2" onClick={handleSmsImport}>
