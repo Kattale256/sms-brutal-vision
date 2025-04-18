@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import MessageStats from '../components/MessageStats';
@@ -74,7 +75,7 @@ const Index = () => {
         
         <footer className="mt-8 pt-4 border-t-4 border-neo-black text-center">
           <p className="text-neo-gray text-sm">
-            D1 PROJECT • LDC KAMPALA • {new Date().getFullYear()}
+            MONEY TRACKER • NEO-BRUTALIST DESIGN • {new Date().getFullYear()}
             {Capacitor.isNativePlatform() ? ' • MOBILE APP' : ''}
           </p>
         </footer>

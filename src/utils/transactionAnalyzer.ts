@@ -1,3 +1,4 @@
+
 import { Transaction } from '../services/SmsReader';
 
 export const getTotalsByType = (transactions: Transaction[]): Record<string, number> => {
@@ -40,15 +41,6 @@ export const getTotalFees = (transactions: Transaction[]): number => {
   return transactions
     .filter(transaction => transaction.fee !== undefined)
     .reduce((total, transaction) => total + (transaction.fee || 0), 0);
-};
-
-export const getTotalIncome = (transactions: Transaction[]): number => {
-  return transactions
-    .filter(transaction => 
-      transaction.type === 'receive' || 
-      transaction.type === 'deposit'
-    )
-    .reduce((total, transaction) => total + transaction.amount, 0);
 };
 
 export const getTransactionsByDate = (transactions: Transaction[]): Record<string, number> => {
