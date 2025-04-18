@@ -1,3 +1,4 @@
+
 import { Capacitor } from "@capacitor/core";
 
 export interface SmsMessage {
@@ -10,7 +11,7 @@ export interface SmsMessage {
 
 export interface Transaction {
   id: string;
-  type: 'send' | 'receive' | 'payment' | 'withdrawal' | 'deposit' | 'other';
+  type: 'receive' | 'send' | 'payment' | 'withdrawal' | 'other';
   amount: number;
   currency: string;
   sender?: string;
@@ -21,6 +22,7 @@ export interface Transaction {
   reference?: string;
   timestamp: string;
   agentId?: string;
+  phoneNumber?: string;
 }
 
 class SmsReader {
@@ -47,19 +49,14 @@ class SmsReader {
     }
 
     try {
-      if (!Capacitor.Plugins) {
+      const permissions = Capacitor.Permissions;
+      
+      if (!permissions) {
         console.log("Permissions plugin not available");
         return false;
       }
       
-      const { Permissions } = Capacitor.Plugins;
-      
-      if (!Permissions) {
-        console.log("Permissions plugin not available");
-        return false;
-      }
-      
-      const permissionStatus = await Permissions.query({ name: 'sms' });
+      const permissionStatus = await permissions.query({ name: 'sms' });
       
       if (permissionStatus.state === 'granted') {
         this.hasPermission = true;
@@ -67,7 +64,7 @@ class SmsReader {
       }
       
       if (permissionStatus.state === 'prompt') {
-        const requestResult = await Permissions.request({ name: 'sms' });
+        const requestResult = await permissions.request({ name: 'sms' });
         this.hasPermission = requestResult.state === 'granted';
         return this.hasPermission;
       }
@@ -83,25 +80,21 @@ class SmsReader {
   public async readSms(): Promise<SmsMessage[]> {
     if (!this.isNativePlatform() || !this.hasPermission) {
       console.log("Cannot read SMS: not on native platform or no permission");
-      return [];
+      return this.getSampleData();
     }
 
     try {
       console.log("Reading SMS using ContentProvider");
       
-      if (Capacitor.isPluginAvailable && Capacitor.isPluginAvailable('SmsReader')) {
+      const isAvailable = Capacitor.isPluginAvailable('SmsReader');
+      if (isAvailable) {
         console.log("SmsReader plugin is available");
         
         try {
-          if (!Capacitor.Plugins) {
-            console.log("Plugins not available");
-            return [];
-          }
+          const smsReader = Capacitor.Plugins.SmsReader;
           
-          const { SmsReader } = Capacitor.Plugins;
-          
-          if (SmsReader) {
-            const result = await SmsReader.getSmsMessages({
+          if (smsReader) {
+            const result = await smsReader.getSmsMessages({
               maxCount: 100,
               contentUri: "content://sms/inbox"
             });
@@ -150,18 +143,18 @@ class SmsReader {
     
     let type: Transaction['type'] = 'other';
     
-    if (lowerMessage.includes('received') || lowerMessage.includes('receive')) {
+    // Determine transaction type
+    if (lowerMessage.includes('received')) {
       type = 'receive';
-    } else if (lowerMessage.includes('sent') || lowerMessage.includes('send')) {
+    } else if (lowerMessage.includes('sent')) {
       type = 'send';
-    } else if (lowerMessage.includes('paid') || lowerMessage.includes('payment')) {
+    } else if (lowerMessage.includes('paid')) {
       type = 'payment';
-    } else if (lowerMessage.includes('withdrawn') || lowerMessage.includes('withdraw')) {
+    } else if (lowerMessage.includes('withdrawn')) {
       type = 'withdrawal';
-    } else if (lowerMessage.includes('deposit')) {
-      type = 'deposit';
     }
     
+    // Extract TID (Transaction ID)
     const tidRegex = /TID\s+(\d+)/i;
     const tidMatch = message.match(tidRegex);
     const reference = tidMatch ? tidMatch[1] : undefined;
@@ -171,7 +164,8 @@ class SmsReader {
       return null;
     }
     
-    const amountRegex = /(?:UGX|USH|KES|TZS)\s*([0-9,.]+)/i;
+    // Extract amount
+    const amountRegex = /UGX\s*([0-9,.]+)/i;
     const amountMatch = message.match(amountRegex);
     
     if (!amountMatch) {
@@ -181,63 +175,40 @@ class SmsReader {
     
     const amountStr = amountMatch[1].replace(/,/g, '');
     const amount = parseFloat(amountStr);
-    
-    let currency = 'UGX';
-    if (message.includes('UGX')) {
-      currency = 'UGX';
-    } else if (message.includes('KES')) {
-      currency = 'KES';
-    } else if (message.includes('TZS')) {
-      currency = 'TZS';
-    }
+    const currency = 'UGX';
     
     let sender: string | undefined;
     let recipient: string | undefined;
     let fee: number | undefined;
     let tax: number | undefined;
-    let balance: number | undefined;
     let agentId: string | undefined;
+    let phoneNumber: string | undefined;
     let timestamp = new Date().toISOString();
     
+    // Parse transaction-specific details
     if (type === 'receive') {
+      // Format: "from 755352144, GODFREY MUYIMBWA"
       const phoneRegex = /from\s+(\d{9})/i;
       const phoneMatch = message.match(phoneRegex);
-      const phone = phoneMatch ? phoneMatch[1] : undefined;
+      phoneNumber = phoneMatch ? phoneMatch[1] : undefined;
       
       const nameRegex = /from\s+\d{9},\s+([^\.]+)/i;
       const nameMatch = message.match(nameRegex);
       sender = nameMatch ? nameMatch[1].trim() : undefined;
-      
-      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
-      const balanceMatch = message.match(balanceRegex);
-      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
-      
-      const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
-      const dateTimeMatch = message.match(dateTimeRegex);
-      if (dateTimeMatch) {
-        const dateStr = dateTimeMatch[1];
-        const parsedDate = new Date(dateStr);
-        if (!isNaN(parsedDate.getTime())) {
-          timestamp = parsedDate.toISOString();
-        }
-      }
     } 
     else if (type === 'send') {
-      const recipientRegex = /to\s+([^\d]+)\s+\d+/i;
+      // Handle sent transaction
+      const recipientRegex = /to\s+([^\d]+)\s+\d{9}/i;
       const recipientMatch = message.match(recipientRegex);
       recipient = recipientMatch ? recipientMatch[1].trim() : undefined;
       
-      const phoneRegex = /to\s+[^\d]+\s+(\d+)/i;
+      const phoneRegex = /\s(\d{9})/i;
       const phoneMatch = message.match(phoneRegex);
-      const phone = phoneMatch ? phoneMatch[1] : undefined;
+      phoneNumber = phoneMatch ? phoneMatch[1] : undefined;
       
-      const feeRegex = /Fee\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const feeRegex = /Fee\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const feeMatch = message.match(feeRegex);
       fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
-      
-      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
-      const balanceMatch = message.match(balanceRegex);
-      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
       
       const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
       const dateTimeMatch = message.match(dateTimeRegex);
@@ -254,17 +225,13 @@ class SmsReader {
       const agentMatch = message.match(agentRegex);
       agentId = agentMatch ? agentMatch[1] : undefined;
       
-      const feeRegex = /Fee\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const feeRegex = /Fee\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const feeMatch = message.match(feeRegex);
       fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
       
-      const taxRegex = /Tax\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const taxRegex = /Tax\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const taxMatch = message.match(taxRegex);
       tax = taxMatch ? parseFloat(taxMatch[1].replace(/,/g, '')) : undefined;
-      
-      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
-      const balanceMatch = message.match(balanceRegex);
-      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
       
       const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
       const dateTimeMatch = message.match(dateTimeRegex);
@@ -281,13 +248,9 @@ class SmsReader {
       const businessMatch = message.match(businessRegex);
       recipient = businessMatch ? businessMatch[1].trim() : undefined;
       
-      const chargeRegex = /Charge\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const chargeRegex = /Charge\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const chargeMatch = message.match(chargeRegex);
       fee = chargeMatch ? parseFloat(chargeMatch[1].replace(/,/g, '')) : undefined;
-      
-      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
-      const balanceMatch = message.match(balanceRegex);
-      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
       
       const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
       const dateTimeMatch = message.match(dateTimeRegex);
@@ -309,9 +272,9 @@ class SmsReader {
       recipient,
       fee,
       tax,
-      balance,
       reference,
       agentId,
+      phoneNumber,
       timestamp
     };
   }
