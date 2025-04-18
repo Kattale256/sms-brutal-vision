@@ -43,6 +43,34 @@ export const getTotalFees = (transactions: Transaction[]): number => {
     .reduce((total, transaction) => total + (transaction.fee || 0), 0);
 };
 
+export const getTotalTaxes = (transactions: Transaction[]): number => {
+  return transactions
+    .filter(transaction => transaction.tax !== undefined)
+    .reduce((total, transaction) => total + (transaction.tax || 0), 0);
+};
+
+export const getTotalIncome = (transactions: Transaction[]): number => {
+  return transactions
+    .filter(transaction => transaction.type === 'receive' || transaction.type === 'deposit')
+    .reduce((total, transaction) => total + transaction.amount, 0);
+};
+
+export const getFeesByDate = (transactions: Transaction[]): Record<string, number> => {
+  const feesByDate: Record<string, number> = {};
+  
+  transactions.forEach(transaction => {
+    if (transaction.fee !== undefined && transaction.fee > 0) {
+      const date = new Date(transaction.timestamp).toISOString().split('T')[0];
+      feesByDate[date] = (feesByDate[date] || 0) + transaction.fee;
+    }
+  });
+  
+  // Sort by date
+  return Object.fromEntries(
+    Object.entries(feesByDate).sort(([a], [b]) => a.localeCompare(b))
+  );
+};
+
 export const getTransactionsByDate = (transactions: Transaction[]): Record<string, number> => {
   const byDate: Record<string, number> = {};
   

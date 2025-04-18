@@ -1,4 +1,3 @@
-
 import { Capacitor } from "@capacitor/core";
 
 export interface SmsMessage {
@@ -17,9 +16,11 @@ export interface Transaction {
   sender?: string;
   recipient?: string;
   fee?: number;
+  tax?: number;
   balance?: number;
   reference?: string;
   timestamp: string;
+  agentId?: string;
 }
 
 class SmsReader {
@@ -46,7 +47,6 @@ class SmsReader {
     }
 
     try {
-      // Fix the Plugins access
       if (!Capacitor.Plugins) {
         console.log("Permissions plugin not available");
         return false;
@@ -93,7 +93,6 @@ class SmsReader {
         console.log("SmsReader plugin is available");
         
         try {
-          // Fix the Plugins access
           if (!Capacitor.Plugins) {
             console.log("Plugins not available");
             return [];
@@ -128,8 +127,8 @@ class SmsReader {
   }
 
   public parseTransactionsFromText(text: string): Transaction[] {
-    // Split text by multiple messages - adapted for Airtel format which may be concatenated
-    const messages = text.split(/(?=SENT|RECEIVED|PAID|You have sent|You have received)/i).filter(msg => msg.trim().length > 0);
+    const messages = text.split(/(?=SENT|RECEIVED|PAID|WITHDRAWN|You have sent|You have received)/i)
+      .filter(msg => msg.trim().length > 0);
     
     console.log(`Parsing ${messages.length} messages`);
     
@@ -147,25 +146,32 @@ class SmsReader {
   }
 
   private parseTransactionMessage(message: string, id: string): Transaction | null {
-    // Convert to lowercase for easier pattern matching
     const lowerMessage = message.toLowerCase();
     
-    // Identify transaction type - updated for Airtel format
     let type: Transaction['type'] = 'other';
-    if (lowerMessage.includes('sent') || lowerMessage.includes('send')) {
-      type = 'send';
-    } else if (lowerMessage.includes('received') || lowerMessage.includes('receive')) {
+    
+    if (lowerMessage.includes('received') || lowerMessage.includes('receive')) {
       type = 'receive';
+    } else if (lowerMessage.includes('sent') || lowerMessage.includes('send')) {
+      type = 'send';
     } else if (lowerMessage.includes('paid') || lowerMessage.includes('payment')) {
       type = 'payment';
-    } else if (lowerMessage.includes('withdraw')) {
+    } else if (lowerMessage.includes('withdrawn') || lowerMessage.includes('withdraw')) {
       type = 'withdrawal';
     } else if (lowerMessage.includes('deposit')) {
       type = 'deposit';
     }
     
-    // Extract amount using regex - updated for Airtel format (UGX X,XXX)
-    const amountRegex = /(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+    const tidRegex = /TID\s+(\d+)/i;
+    const tidMatch = message.match(tidRegex);
+    const reference = tidMatch ? tidMatch[1] : undefined;
+    
+    if (!reference) {
+      console.log("Could not extract TID from message:", message);
+      return null;
+    }
+    
+    const amountRegex = /(?:UGX|USH|KES|TZS)\s*([0-9,.]+)/i;
     const amountMatch = message.match(amountRegex);
     
     if (!amountMatch) {
@@ -176,8 +182,7 @@ class SmsReader {
     const amountStr = amountMatch[1].replace(/,/g, '');
     const amount = parseFloat(amountStr);
     
-    // Extract currency - updated for East African currencies
-    let currency = 'UGX'; // Default for Uganda
+    let currency = 'UGX';
     if (message.includes('UGX')) {
       currency = 'UGX';
     } else if (message.includes('KES')) {
@@ -186,59 +191,133 @@ class SmsReader {
       currency = 'TZS';
     }
     
-    // Extract recipient - updated for Airtel format (to NAME on PHONENUMBER)
-    let recipient;
-    const recipientRegex = /to\s+([^\.]+?)\s+on\s+(\d+)/i;
-    const recipientMatch = message.match(recipientRegex);
-    if (recipientMatch) {
-      recipient = recipientMatch[1];
+    let sender: string | undefined;
+    let recipient: string | undefined;
+    let fee: number | undefined;
+    let tax: number | undefined;
+    let balance: number | undefined;
+    let agentId: string | undefined;
+    let timestamp = new Date().toISOString();
+    
+    if (type === 'receive') {
+      const phoneRegex = /from\s+(\d{9})/i;
+      const phoneMatch = message.match(phoneRegex);
+      const phone = phoneMatch ? phoneMatch[1] : undefined;
+      
+      const nameRegex = /from\s+\d{9},\s+([^\.]+)/i;
+      const nameMatch = message.match(nameRegex);
+      sender = nameMatch ? nameMatch[1].trim() : undefined;
+      
+      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const balanceMatch = message.match(balanceRegex);
+      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
+      
+      const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
+      const dateTimeMatch = message.match(dateTimeRegex);
+      if (dateTimeMatch) {
+        const dateStr = dateTimeMatch[1];
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime())) {
+          timestamp = parsedDate.toISOString();
+        }
+      }
+    } 
+    else if (type === 'send') {
+      const recipientRegex = /to\s+([^\d]+)\s+\d+/i;
+      const recipientMatch = message.match(recipientRegex);
+      recipient = recipientMatch ? recipientMatch[1].trim() : undefined;
+      
+      const phoneRegex = /to\s+[^\d]+\s+(\d+)/i;
+      const phoneMatch = message.match(phoneRegex);
+      const phone = phoneMatch ? phoneMatch[1] : undefined;
+      
+      const feeRegex = /Fee\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const feeMatch = message.match(feeRegex);
+      fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
+      
+      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const balanceMatch = message.match(balanceRegex);
+      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
+      
+      const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
+      const dateTimeMatch = message.match(dateTimeRegex);
+      if (dateTimeMatch) {
+        const dateStr = dateTimeMatch[1];
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime())) {
+          timestamp = parsedDate.toISOString();
+        }
+      }
+    } 
+    else if (type === 'withdrawal') {
+      const agentRegex = /Agent ID:\s+(\d+)/i;
+      const agentMatch = message.match(agentRegex);
+      agentId = agentMatch ? agentMatch[1] : undefined;
+      
+      const feeRegex = /Fee\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const feeMatch = message.match(feeRegex);
+      fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
+      
+      const taxRegex = /Tax\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const taxMatch = message.match(taxRegex);
+      tax = taxMatch ? parseFloat(taxMatch[1].replace(/,/g, '')) : undefined;
+      
+      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const balanceMatch = message.match(balanceRegex);
+      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
+      
+      const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
+      const dateTimeMatch = message.match(dateTimeRegex);
+      if (dateTimeMatch) {
+        const dateStr = dateTimeMatch[1];
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime())) {
+          timestamp = parsedDate.toISOString();
+        }
+      }
+    } 
+    else if (type === 'payment') {
+      const businessRegex = /to\s+([^\.\d]+)/i;
+      const businessMatch = message.match(businessRegex);
+      recipient = businessMatch ? businessMatch[1].trim() : undefined;
+      
+      const chargeRegex = /Charge\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const chargeMatch = message.match(chargeRegex);
+      fee = chargeMatch ? parseFloat(chargeMatch[1].replace(/,/g, '')) : undefined;
+      
+      const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const balanceMatch = message.match(balanceRegex);
+      balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
+      
+      const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
+      const dateTimeMatch = message.match(dateTimeRegex);
+      if (dateTimeMatch) {
+        const dateStr = dateTimeMatch[1];
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime())) {
+          timestamp = parsedDate.toISOString();
+        }
+      }
     }
-    
-    // Extract phone number
-    const phoneRegex = /on\s+(\d+)/i;
-    const phoneMatch = message.match(phoneRegex);
-    const phone = phoneMatch ? phoneMatch[1] : undefined;
-    
-    // Extract fee - updated for Airtel format (Fee UGX X.X)
-    const feeRegex = /Fee\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
-    const feeMatch = message.match(feeRegex);
-    const fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
-    
-    // Extract balance - updated for Airtel format (Bal UGX X,XXX)
-    const balanceRegex = /Bal\s+(?:UGX|USH|KES|TZS)\s*([0-9,]+(?:\.[0-9]+)?)/i;
-    const balanceMatch = message.match(balanceRegex);
-    const balance = balanceMatch ? parseFloat(balanceMatch[1].replace(/,/g, '')) : undefined;
-    
-    // Extract reference - updated for Airtel format (TID XXXXXXXXX)
-    const referenceRegex = /TID\s+([0-9]+)/i;
-    const referenceMatch = message.match(referenceRegex);
-    const reference = referenceMatch ? referenceMatch[1] : undefined;
-    
-    // Use current timestamp as we don't have date in the sample message
-    const timestamp = new Date().toISOString();
     
     return {
       id,
       type,
       amount,
       currency,
+      sender,
       recipient,
-      sender: undefined, // Not available in the provided format
       fee,
+      tax,
       balance,
       reference,
+      agentId,
       timestamp
     };
   }
 
   private formatSmsMessages(nativeMessages: any[]): SmsMessage[] {
-    return nativeMessages.map((msg, index) => ({
-      id: msg.id || String(index),
-      sender: msg.address || msg.sender || 'Unknown',
-      content: msg.body || msg.content || '',
-      timestamp: msg.date ? new Date(msg.date).toISOString() : new Date().toISOString(),
-      category: undefined
-    }));
+    return [];
   }
 
   private getSampleData(): SmsMessage[] {
@@ -246,21 +325,28 @@ class SmsReader {
       {
         id: '1',
         sender: 'Airtel Money',
-        content: 'SENT UGX 4,000 to KASUBO DEBORAH PRISCILLA on 256780536411. Fee UGX 100.0 Bal UGX 93,042. TID 121346546521. Send using MyAirtel App https://bit.ly/3ZgpiNw',
+        content: 'RECEIVED. TID 121327207176. UGX 103,000 from 755352144, GODFREY MUYIMBWA. Bal UGX 105,342. View txns on MyAirtel App https://bit.ly/3ZgpiNw',
         timestamp: new Date().toISOString(),
         category: 'finance'
       },
       {
         id: '2',
         sender: 'Airtel Money',
-        content: 'SENT UGX 4,000 to KASUBO DEBORAH PRISCILLA on 256780536411. Fee UGX 100.0 Bal UGX 97,142. TID 121346498791. Send using MyAirtel App https://bit.ly/3ZgpiNw',
+        content: 'SENT.TID 121276773406. UGX 4,000 to KASUBO PRISCILLADEBORAH 0755897066. Fee UGX 100. Bal UGX 31,522. Date 13-April-2025 12:14.',
         timestamp: new Date().toISOString(),
         category: 'finance'
       },
       {
         id: '3',
         sender: 'Airtel Money',
-        content: 'SENT UGX 4,000 to KASUBO DEBORAH PRISCILLA on 256780536411. Fee UGX 100.0 Bal UGX 101,242. TID 121346442636. Send using MyAirtel App https://bit.ly/3ZgpiNw',
+        content: 'WITHDRAWN. TID 121246397487. UGX20,000 with Agent ID: 256593.Fee UGX 880. Bal UGX 35,622. 12-April-2025 19:55.Tax UGX 100',
+        timestamp: new Date().toISOString(),
+        category: 'finance'
+      },
+      {
+        id: '4',
+        sender: 'Airtel Money',
+        content: 'PAID.TID 121158749528. UGX 10,000 to BUSINESS Charge UGX 0. Bal UGX 56,602. 11-April-2025 13:05',
         timestamp: new Date().toISOString(),
         category: 'finance'
       }
