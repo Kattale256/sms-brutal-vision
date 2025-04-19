@@ -81,6 +81,13 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
     const feesWS = XLSX.utils.json_to_sheet(feesData);
     XLSX.utils.book_append_sheet(workbook, feesWS, "Fees Over Time");
     
+    const copyrightData = [
+      { Notice: 'Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.' },
+      { Notice: '(c) 2025 FIRM D1, LDC KAMPALA' }
+    ];
+    const copyrightWS = XLSX.utils.json_to_sheet(copyrightData);
+    XLSX.utils.book_append_sheet(workbook, copyrightWS, "Copyright");
+    
     XLSX.writeFile(workbook, "transaction-stats.xlsx");
   };
 
@@ -99,13 +106,17 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         `${amount.toFixed(2)} ${mainCurrency}`
       ]);
     
+    let finalY = 45;
     autoTable(doc, {
-      startY: 45,
+      startY: finalY,
       head: [['Type', 'Amount']],
-      body: summaryData
+      body: summaryData,
+      didParseCell: (data) => {
+        finalY = Math.max(finalY, data.cell.y + data.cell.height);
+      }
     });
     
-    doc.text("Financial Overview", 20, doc.lastAutoTable.finalY + 20);
+    doc.text("Financial Overview", 20, finalY + 10);
     const overviewData = [
       ['Money In', `${totalIncome.toFixed(2)} ${mainCurrency}`],
       ['Money Out', `${totalOut.toFixed(2)} ${mainCurrency}`],
@@ -113,23 +124,35 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
       ['Financial Health', `${balance.toFixed(2)} ${mainCurrency}`]
     ];
     
+    finalY += 15;
     autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 25,
+      startY: finalY,
       head: [['Metric', 'Value']],
-      body: overviewData
+      body: overviewData,
+      didParseCell: (data) => {
+        finalY = Math.max(finalY, data.cell.y + data.cell.height);
+      }
     });
     
-    doc.text("Fees Over Time", 20, doc.lastAutoTable.finalY + 20);
+    doc.text("Fees Over Time", 20, finalY + 10);
     const feesData = Object.entries(feesByDate).map(([date, fee]) => [
       new Date(date).toLocaleDateString(),
       `${fee.toFixed(2)} ${mainCurrency}`
     ]);
     
+    finalY += 15;
     autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 25,
+      startY: finalY,
       head: [['Date', 'Fees']],
-      body: feesData
+      body: feesData,
+      didParseCell: (data) => {
+        finalY = Math.max(finalY, data.cell.y + data.cell.height);
+      }
     });
+    
+    doc.setFontSize(10);
+    doc.text("Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.", 20, finalY + 20);
+    doc.text("(c) 2025 FIRM D1, LDC KAMPALA", 20, finalY + 25);
     
     doc.save("transaction-stats.pdf");
   };
