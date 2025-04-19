@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Transaction } from '../services/SmsReader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
@@ -12,14 +11,12 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
-  // Type labels
+  // Updated type labels
   const typeLabels = {
     send: 'Sent',
     receive: 'Received',
     payment: 'Payment',
-    withdrawal: 'Withdrawal',
-    deposit: 'Deposit',
-    other: 'Other'
+    withdrawal: 'Withdrawal'
   };
   
   // Handle sort
@@ -113,11 +110,11 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
                     {typeLabels[transaction.type]}
                   </TableCell>
                   <TableCell className={
-                    transaction.type === 'receive' || transaction.type === 'deposit' 
+                    transaction.type === 'receive'
                       ? 'text-green-600 font-bold' 
                       : 'text-red-600 font-bold'
                   }>
-                    {transaction.type === 'receive' || transaction.type === 'deposit' ? '+' : '-'}
+                    {transaction.type === 'receive' ? '+' : '-'}
                     {transaction.amount.toFixed(2)} {transaction.currency}
                   </TableCell>
                   <TableCell>

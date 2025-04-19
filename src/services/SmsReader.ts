@@ -1,4 +1,3 @@
-
 import { Capacitor } from "@capacitor/core";
 
 export interface SmsMessage {
@@ -11,7 +10,7 @@ export interface SmsMessage {
 
 export interface Transaction {
   id: string;
-  type: 'receive' | 'send' | 'payment' | 'withdrawal' | 'other';
+  type: 'receive' | 'send' | 'payment' | 'withdrawal';
   amount: number;
   currency: string;
   sender?: string;
@@ -141,7 +140,7 @@ class SmsReader {
   private parseTransactionMessage(message: string, id: string): Transaction | null {
     const lowerMessage = message.toLowerCase();
     
-    let type: Transaction['type'] = 'other';
+    let type: Transaction['type'] = 'send';
     
     // Determine transaction type
     if (lowerMessage.includes('received')) {
