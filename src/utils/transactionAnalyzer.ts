@@ -5,7 +5,8 @@ export const getTotalsByType = (transactions: Transaction[]): Record<string, num
     send: 0,
     receive: 0,
     payment: 0,
-    withdrawal: 0
+    withdrawal: 0,
+    deposit: 0
   };
   
   transactions.forEach(transaction => {
@@ -48,7 +49,7 @@ export const getTotalTaxes = (transactions: Transaction[]): number => {
 
 export const getTotalIncome = (transactions: Transaction[]): number => {
   return transactions
-    .filter(transaction => transaction.type === 'receive')
+    .filter(transaction => transaction.type === 'receive' || transaction.type === 'deposit')
     .reduce((total, transaction) => total + transaction.amount, 0);
 };
 
@@ -105,7 +106,8 @@ export const getAverageTransactionAmount = (transactions: Transaction[]): Record
     send: {sum: 0, count: 0},
     receive: {sum: 0, count: 0},
     payment: {sum: 0, count: 0},
-    withdrawal: {sum: 0, count: 0}
+    withdrawal: {sum: 0, count: 0},
+    deposit: {sum: 0, count: 0}
   };
   
   transactions.forEach(transaction => {

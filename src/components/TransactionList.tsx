@@ -16,7 +16,8 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
     send: 'Sent',
     receive: 'Received',
     payment: 'Payment',
-    withdrawal: 'Withdrawal'
+    withdrawal: 'Withdrawal',
+    deposit: 'Deposit'
   };
   
   // Handle sort
@@ -110,11 +111,11 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
                     {typeLabels[transaction.type]}
                   </TableCell>
                   <TableCell className={
-                    transaction.type === 'receive'
+                    transaction.type === 'receive' || transaction.type === 'deposit'
                       ? 'text-green-600 font-bold' 
                       : 'text-red-600 font-bold'
                   }>
-                    {transaction.type === 'receive' ? '+' : '-'}
+                    {transaction.type === 'receive' || transaction.type === 'deposit' ? '+' : '-'}
                     {transaction.amount.toFixed(2)} {transaction.currency}
                   </TableCell>
                   <TableCell>

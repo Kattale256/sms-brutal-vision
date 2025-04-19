@@ -10,7 +10,7 @@ export interface SmsMessage {
 
 export interface Transaction {
   id: string;
-  type: 'receive' | 'send' | 'payment' | 'withdrawal';
+  type: 'receive' | 'send' | 'payment' | 'withdrawal' | 'deposit';
   amount: number;
   currency: string;
   sender?: string;
@@ -151,6 +151,8 @@ class SmsReader {
       type = 'payment';
     } else if (lowerMessage.includes('withdrawn')) {
       type = 'withdrawal';
+    } else if (lowerMessage.includes('cash deposit')) {
+      type = 'deposit';
     }
     
     // Extract TID (Transaction ID)
@@ -250,6 +252,21 @@ class SmsReader {
       const chargeRegex = /Charge\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const chargeMatch = message.match(chargeRegex);
       fee = chargeMatch ? parseFloat(chargeMatch[1].replace(/,/g, '')) : undefined;
+      
+      const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
+      const dateTimeMatch = message.match(dateTimeRegex);
+      if (dateTimeMatch) {
+        const dateStr = dateTimeMatch[1];
+        const parsedDate = new Date(dateStr);
+        if (!isNaN(parsedDate.getTime())) {
+          timestamp = parsedDate.toISOString();
+        }
+      }
+    }
+    else if (type === 'deposit') {
+      const agentRegex = /Agent ID:\s+(\d+)/i;
+      const agentMatch = message.match(agentRegex);
+      agentId = agentMatch ? agentMatch[1] : undefined;
       
       const dateTimeRegex = /(\d{1,2}-[A-Za-z]+-\d{4}\s+\d{1,2}:\d{2})/i;
       const dateTimeMatch = message.match(dateTimeRegex);
