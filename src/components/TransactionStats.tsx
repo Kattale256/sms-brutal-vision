@@ -95,7 +95,7 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
               <p className="text-2xl font-bold text-neo-gray">{totalFees.toFixed(2)} {mainCurrency}</p>
             </div>
             <div className="border-2 border-neo-black p-4">
-              <h3 className="text-lg font-bold">BALANCE</h3>
+              <h3 className="text-lg font-bold">FINANCIAL HEALTH</h3>
               <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {balance.toFixed(2)} {mainCurrency}
               </p>
