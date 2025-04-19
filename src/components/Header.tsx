@@ -3,7 +3,6 @@ import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/SmsReader';
 import { Transaction } from '../services/SmsReader';
 import { Clipboard, Smartphone } from 'lucide-react';
-
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
   onTransactionsImport?: (transactions: Transaction[]) => void;
@@ -17,7 +16,6 @@ const Header: React.FC<{
   const smsReader = SmsReader.getInstance();
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [pastedText, setPastedText] = useState('');
-
   const handleSmsImport = async () => {
     if (smsReader.isNativePlatform()) {
       const hasPermission = await smsReader.requestSmsPermission();
@@ -53,7 +51,6 @@ const Header: React.FC<{
       setShowPasteDialog(true);
     }
   };
-
   const handlePasteSubmit = () => {
     if (!pastedText.trim()) {
       toast({
@@ -91,11 +88,10 @@ const Header: React.FC<{
       });
     }
   };
-
   return <header className="border-b-4 border-neo-black mb-6 pb-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC - COPY &amp; PASTE MESSAGES HERE</h1>
+          <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC - COPY & PASTE MESSAGES HERE >></h1>
           <p className="text-neo-gray font-medium mt-1">African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025</p>
         </div>
         <div>
@@ -134,5 +130,4 @@ const Header: React.FC<{
         </div>}
     </header>;
 };
-
 export default Header;
