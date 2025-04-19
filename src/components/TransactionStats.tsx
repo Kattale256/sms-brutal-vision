@@ -1,7 +1,11 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Transaction } from '../services/SmsReader';
+import { Button } from './ui/button';
+import { FileDown } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { 
   getTotalsByType, 
   getTotalFees, 
@@ -21,7 +25,6 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   const averageAmounts = getAverageTransactionAmount(transactions);
   const feesByDate = getFeesByDate(transactions);
   
-  // Format data for the chart
   const typeLabels = {
     send: 'Sent',
     receive: 'Received',
@@ -38,25 +41,112 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
       amount: amount
     }));
   
-  // Prepare fees chart data
   const feesChartData = Object.entries(feesByDate).map(([date, amount]) => ({
     date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     fees: amount
   }));
   
-  // Calculate total in/out
   const totalOut = totalsByType.send + totalsByType.payment + totalsByType.withdrawal;
   const balance = totalIncome - totalOut;
   
-  // Get most common currency
   const currencyMap: Record<string, number> = {};
   transactions.forEach(t => {
     currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
   });
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
+  const exportToExcel = () => {
+    const workbook = XLSX.utils.book_new();
+    
+    const summaryData = Object.entries(totalsByType).map(([type, amount]) => ({
+      Type: typeLabels[type as keyof typeof typeLabels],
+      Amount: `${amount.toFixed(2)} ${mainCurrency}`
+    }));
+    const summaryWS = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summaryWS, "Transaction Summary");
+    
+    const overviewData = [
+      { Metric: 'Money In', Value: `${totalIncome.toFixed(2)} ${mainCurrency}` },
+      { Metric: 'Money Out', Value: `${totalOut.toFixed(2)} ${mainCurrency}` },
+      { Metric: 'Fees Paid', Value: `${totalFees.toFixed(2)} ${mainCurrency}` },
+      { Metric: 'Financial Health', Value: `${balance.toFixed(2)} ${mainCurrency}` }
+    ];
+    const overviewWS = XLSX.utils.json_to_sheet(overviewData);
+    XLSX.utils.book_append_sheet(workbook, overviewWS, "Financial Overview");
+    
+    const feesData = Object.entries(feesByDate).map(([date, fee]) => ({
+      Date: new Date(date).toLocaleDateString(),
+      Fees: `${fee.toFixed(2)} ${mainCurrency}`
+    }));
+    const feesWS = XLSX.utils.json_to_sheet(feesData);
+    XLSX.utils.book_append_sheet(workbook, feesWS, "Fees Over Time");
+    
+    XLSX.writeFile(workbook, "transaction-stats.xlsx");
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text("Transaction Statistics Report", 20, 20);
+    
+    doc.setFontSize(16);
+    doc.text("Transaction Summary", 20, 40);
+    const summaryData = Object.entries(totalsByType)
+      .filter(([_, value]) => value > 0)
+      .map(([type, amount]) => [
+        typeLabels[type as keyof typeof typeLabels],
+        `${amount.toFixed(2)} ${mainCurrency}`
+      ]);
+    
+    autoTable(doc, {
+      startY: 45,
+      head: [['Type', 'Amount']],
+      body: summaryData
+    });
+    
+    doc.text("Financial Overview", 20, doc.lastAutoTable.finalY + 20);
+    const overviewData = [
+      ['Money In', `${totalIncome.toFixed(2)} ${mainCurrency}`],
+      ['Money Out', `${totalOut.toFixed(2)} ${mainCurrency}`],
+      ['Fees Paid', `${totalFees.toFixed(2)} ${mainCurrency}`],
+      ['Financial Health', `${balance.toFixed(2)} ${mainCurrency}`]
+    ];
+    
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 25,
+      head: [['Metric', 'Value']],
+      body: overviewData
+    });
+    
+    doc.text("Fees Over Time", 20, doc.lastAutoTable.finalY + 20);
+    const feesData = Object.entries(feesByDate).map(([date, fee]) => [
+      new Date(date).toLocaleDateString(),
+      `${fee.toFixed(2)} ${mainCurrency}`
+    ]);
+    
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 25,
+      head: [['Date', 'Fees']],
+      body: feesData
+    });
+    
+    doc.save("transaction-stats.pdf");
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6">
+      <div className="flex justify-end gap-2">
+        <Button onClick={exportToExcel} variant="outline" className="gap-2">
+          <FileDown className="h-4 w-4" />
+          Export to Excel
+        </Button>
+        <Button onClick={exportToPDF} variant="outline" className="gap-2">
+          <FileDown className="h-4 w-4" />
+          Export to PDF
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="neo-chart">
           <h2 className="text-2xl font-bold mb-4">TRANSACTION SUMMARY</h2>
