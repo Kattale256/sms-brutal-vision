@@ -111,17 +111,17 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
     XLSX.writeFile(workbook, "transaction-stats.xlsx");
   };
 
-  const exportToPDF = () => {
-    const currentExportCount = parseInt(localStorage.getItem('exportCount') || '0', 10);
-    localStorage.setItem('exportCount', (currentExportCount + 1).toString());
-    
+  const exportToPDF = (transactions: Transaction[]) => {
     const doc = new jsPDF();
     
+    // Title
     doc.setFontSize(20);
-    doc.text("Transaction Statistics Report", 20, 20);
+    doc.text("Transaction Analysis Report", 20, 20);
     
+    // Transaction Summary
     doc.setFontSize(16);
     doc.text("Transaction Summary", 20, 40);
+    
     const summaryData = Object.entries(totalsByType)
       .filter(([_, value]) => value > 0)
       .map(([type, amount]) => [
@@ -129,17 +129,20 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         `${amount.toFixed(2)} ${mainCurrency}`
       ]);
     
-    let finalY = 45;
     autoTable(doc, {
-      startY: finalY,
+      startY: 45,
       head: [['Type', 'Amount']],
       body: summaryData,
-      didParseCell: (data) => {
-        finalY = Math.max(finalY, data.cell.y + data.cell.height);
-      }
+      theme: 'plain',
+      headStyles: { fontStyle: 'bold', fontSize: 12 },
+      styles: { fontSize: 11, cellPadding: 5 },
+      margin: { top: 10, right: 20, bottom: 10, left: 20 }
     });
     
-    doc.text("Financial Overview", 20, finalY + 10);
+    // Financial Overview
+    doc.setFontSize(16);
+    doc.text("Financial Overview", 20, doc.autoTable.previous.finalY + 20);
+    
     const overviewData = [
       ['Money In', `${totalIncome.toFixed(2)} ${mainCurrency}`],
       ['Money Out', `${totalOut.toFixed(2)} ${mainCurrency}`],
@@ -147,52 +150,42 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
       ['Financial Health', `${balance.toFixed(2)} ${mainCurrency}`]
     ];
     
-    finalY += 15;
     autoTable(doc, {
-      startY: finalY,
+      startY: doc.autoTable.previous.finalY + 25,
       head: [['Metric', 'Value']],
       body: overviewData,
-      didParseCell: (data) => {
-        finalY = Math.max(finalY, data.cell.y + data.cell.height);
-      }
-    });
-    
-    doc.text("Fees Over Time", 20, finalY + 10);
-    const feesData = Object.entries(feesByDate).map(([date, fee]) => [
-      new Date(date).toLocaleDateString(),
-      `${fee.toFixed(2)} ${mainCurrency}`
-    ]);
-    
-    finalY += 15;
-    autoTable(doc, {
-      startY: finalY,
-      head: [['Date', 'Fees']],
-      body: feesData,
-      didParseCell: (data) => {
-        finalY = Math.max(finalY, data.cell.y + data.cell.height);
-      }
+      theme: 'plain',
+      headStyles: { fontStyle: 'bold', fontSize: 12 },
+      styles: { fontSize: 11, cellPadding: 5 },
+      margin: { top: 10, right: 20, bottom: 10, left: 20 }
     });
 
-    const recipientsData = Object.entries(frequentContacts).map(([name, count]) => [
-      name || 'Unknown',
-      count.toString()
-    ]);
+    // Recipients
+    doc.setFontSize(16);
+    doc.text("Transaction Recipients", 20, doc.autoTable.previous.finalY + 20);
     
-    finalY += 15;
+    const recipientsData = Object.entries(frequentContacts)
+      .map(([name, count]) => [
+        name || 'Unknown',
+        count.toString()
+      ]);
+    
     autoTable(doc, {
-      startY: finalY,
+      startY: doc.autoTable.previous.finalY + 25,
       head: [['Recipient', 'Frequency']],
       body: recipientsData,
-      didParseCell: (data) => {
-        finalY = Math.max(finalY, data.cell.y + data.cell.height);
-      }
+      theme: 'plain',
+      headStyles: { fontStyle: 'bold', fontSize: 12 },
+      styles: { fontSize: 11, cellPadding: 5 },
+      margin: { top: 10, right: 20, bottom: 10, left: 20 }
     });
-    
+
+    // Copyright notice at the bottom
     doc.setFontSize(10);
-    doc.text("Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.", 20, finalY + 20);
-    doc.text("(c) 2025 FIRM D1, LDC KAMPALA", 20, finalY + 25);
+    doc.text("Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.", 20, doc.autoTable.previous.finalY + 20);
+    doc.text("(c) 2025 FIRM D1, LDC KAMPALA", 20, doc.autoTable.previous.finalY + 25);
     
-    doc.save("transaction-stats.pdf");
+    return doc.output('blob');
   };
 
   return (
@@ -202,7 +195,7 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
           <FileDown className="h-4 w-4" />
           Export to Excel
         </Button>
-        <Button onClick={exportToPDF} variant="outline" className="gap-2">
+        <Button onClick={() => exportToPDF(transactions)} variant="outline" className="gap-2">
           <FileDown className="h-4 w-4" />
           Export to PDF
         </Button>
