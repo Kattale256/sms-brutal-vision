@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/SmsReader';
 import { Transaction } from '../services/SmsReader';
 import { Clipboard, Smartphone } from 'lucide-react';
-import SurveyForm from './SurveyForm';
+import SurveyFormWrapper from './SurveyFormWrapper';
+
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
   onTransactionsImport?: (transactions: Transaction[]) => void;
@@ -19,6 +21,7 @@ const Header: React.FC<{
   const [showSurvey, setShowSurvey] = useState(false);
   const [pastedText, setPastedText] = useState('');
   const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
+  
   const handleSmsImport = async () => {
     if (smsReader.isNativePlatform()) {
       const hasPermission = await smsReader.requestSmsPermission();
@@ -54,6 +57,7 @@ const Header: React.FC<{
       setShowPasteDialog(true);
     }
   };
+  
   const handlePasteSubmit = () => {
     if (!pastedText.trim()) {
       toast({
@@ -89,12 +93,14 @@ const Header: React.FC<{
       });
     }
   };
+  
   const handleSurveyComplete = () => {
     setShowSurvey(false);
     if (onTransactionsImport && parsedTransactions.length > 0) {
       onTransactionsImport(parsedTransactions);
     }
   };
+  
   return <header className="border-b-4 border-neo-black mb-6 pb-4">
       <div className="flex justify-between items-center">
         <div>
@@ -136,11 +142,12 @@ const Header: React.FC<{
           </div>
         </div>}
 
-      {showSurvey && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="neo-card max-w-xl w-full m-4">
-            <SurveyForm onComplete={handleSurveyComplete} />
+      {showSurvey && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
+          <div className="neo-card w-full max-w-xl">
+            <SurveyFormWrapper onComplete={handleSurveyComplete} />
           </div>
         </div>}
     </header>;
 };
+
 export default Header;
