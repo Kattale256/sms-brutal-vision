@@ -1,3 +1,4 @@
+
 import { Capacitor } from "@capacitor/core";
 
 export interface SmsMessage {
@@ -48,24 +49,29 @@ class SmsReader {
     }
 
     try {
-      const permissions = Capacitor.Permissions;
-      
-      if (!permissions) {
+      // Using proper Capacitor APIs
+      if (!Capacitor.getPlatform()) {
         console.log("Permissions plugin not available");
         return false;
       }
       
-      const permissionStatus = await permissions.query({ name: 'sms' });
-      
-      if (permissionStatus.state === 'granted') {
-        this.hasPermission = true;
-        return true;
-      }
-      
-      if (permissionStatus.state === 'prompt') {
-        const requestResult = await permissions.request({ name: 'sms' });
-        this.hasPermission = requestResult.state === 'granted';
-        return this.hasPermission;
+      try {
+        // @ts-ignore - Handling platform specific APIs
+        const permissionStatus = await Capacitor.Permissions.query({ name: 'sms' });
+        
+        if (permissionStatus.state === 'granted') {
+          this.hasPermission = true;
+          return true;
+        }
+        
+        if (permissionStatus.state === 'prompt') {
+          // @ts-ignore - Handling platform specific APIs
+          const requestResult = await Capacitor.Permissions.request({ name: 'sms' });
+          this.hasPermission = requestResult.state === 'granted';
+          return this.hasPermission;
+        }
+      } catch (err) {
+        console.log("Error accessing permissions API:", err);
       }
       
       console.log("SMS permission denied");
@@ -90,7 +96,8 @@ class SmsReader {
         console.log("SmsReader plugin is available");
         
         try {
-          const smsReader = Capacitor.Plugins.SmsReader;
+          // @ts-ignore - Handling platform specific APIs
+          const smsReader = Capacitor.Plugins?.SmsReader;
           
           if (smsReader) {
             const result = await smsReader.getSmsMessages({
