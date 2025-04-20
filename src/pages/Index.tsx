@@ -48,7 +48,10 @@ const Index = () => {
         
         {/* Show survey if needed */}
         {showSurvey && !surveyCompleted ? (
-          <SurveyFormWrapper onComplete={handleSurveyComplete} />
+          <SurveyFormWrapper 
+            onComplete={handleSurveyComplete} 
+            transactions={transactions}
+          />
         ) : (
           <>
             {transactions.length > 0 && (

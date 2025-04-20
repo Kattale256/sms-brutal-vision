@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import SurveyForm from './SurveyForm';
 import { Button } from './ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Transaction } from '../services/SmsReader';
 
 interface SurveyFormWrapperProps {
   onComplete: () => void;
+  transactions?: Transaction[];
 }
 
-const SurveyFormWrapper: React.FC<SurveyFormWrapperProps> = ({ onComplete }) => {
+const SurveyFormWrapper: React.FC<SurveyFormWrapperProps> = ({ onComplete, transactions }) => {
   const [submitted, setSubmitted] = useState(false);
   const isMobile = useIsMobile();
   
@@ -20,8 +22,9 @@ const SurveyFormWrapper: React.FC<SurveyFormWrapperProps> = ({ onComplete }) => 
     onComplete();
   };
   
-  // Calculate scale based on device type (90% on desktop, 85% on mobile)
-  const scale = isMobile ? 0.85 : 0.9;
+  // Calculate scale based on device type (80% on desktop, 75% on mobile)
+  // Reduced by 10% as requested
+  const scale = isMobile ? 0.75 : 0.8;
   
   return (
     <div 
