@@ -1,8 +1,11 @@
+
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/SmsReader';
 import { Transaction } from '../services/SmsReader';
 import { Clipboard, Smartphone } from 'lucide-react';
+import SurveyForm from './SurveyForm';
+
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
   onTransactionsImport?: (transactions: Transaction[]) => void;
@@ -10,12 +13,13 @@ const Header: React.FC<{
   onSmsImport,
   onTransactionsImport
 }) => {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const smsReader = SmsReader.getInstance();
   const [showPasteDialog, setShowPasteDialog] = useState(false);
+  const [showSurvey, setShowSurvey] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
+
   const handleSmsImport = async () => {
     if (smsReader.isNativePlatform()) {
       const hasPermission = await smsReader.requestSmsPermission();
@@ -51,6 +55,7 @@ const Header: React.FC<{
       setShowPasteDialog(true);
     }
   };
+
   const handlePasteSubmit = () => {
     if (!pastedText.trim()) {
       toast({
@@ -67,11 +72,9 @@ const Header: React.FC<{
           title: "Success!",
           description: `${transactions.length} transactions extracted.`
         });
-        if (onTransactionsImport) {
-          onTransactionsImport(transactions);
-        }
+        setParsedTransactions(transactions);
         setShowPasteDialog(false);
-        setPastedText('');
+        setShowSurvey(true);
       } else {
         toast({
           title: "No transactions found",
@@ -88,10 +91,18 @@ const Header: React.FC<{
       });
     }
   };
+
+  const handleSurveyComplete = () => {
+    setShowSurvey(false);
+    if (onTransactionsImport && parsedTransactions.length > 0) {
+      onTransactionsImport(parsedTransactions);
+    }
+  };
+
   return <header className="border-b-4 border-neo-black mb-6 pb-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC - COPY & PASTE YOUR TRANSACTION MESSAGES THERE >></h1>
+          <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC - COPY &amp; PASTE YOUR TRANSACTION MESSAGES HERE &gt;&gt;</h1>
           <p className="text-neo-gray font-medium mt-1">African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025</p>
         </div>
         <div>
@@ -128,6 +139,13 @@ const Header: React.FC<{
             </div>
           </div>
         </div>}
+
+      {showSurvey && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="neo-card max-w-xl w-full m-4">
+            <SurveyForm onComplete={handleSurveyComplete} />
+          </div>
+        </div>}
     </header>;
 };
+
 export default Header;

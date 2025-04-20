@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Transaction } from '../services/SmsReader';
 import { Button } from './ui/button';
 import { FileDown } from 'lucide-react';
@@ -11,12 +11,15 @@ import {
   getTotalFees, 
   getTotalIncome,
   getAverageTransactionAmount,
-  getFeesByDate
+  getFeesByDate,
+  getFrequentContacts
 } from '../utils/transactionAnalyzer';
 
 interface TransactionStatsProps {
   transactions: Transaction[];
 }
+
+const COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
 
 const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => {
   const totalsByType = getTotalsByType(transactions);
@@ -24,6 +27,7 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   const totalIncome = getTotalIncome(transactions);
   const averageAmounts = getAverageTransactionAmount(transactions);
   const feesByDate = getFeesByDate(transactions);
+  const frequentContacts = getFrequentContacts(transactions);
   
   const typeLabels = {
     send: 'Sent',
@@ -55,7 +59,16 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   });
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
+  const recipientsData = Object.entries(frequentContacts)
+    .map(([name, count]) => ({
+      name: name || 'Unknown',
+      value: count
+    }));
+
   const exportToExcel = () => {
+    const currentExportCount = parseInt(localStorage.getItem('exportCount') || '0', 10);
+    localStorage.setItem('exportCount', (currentExportCount + 1).toString());
+    
     const workbook = XLSX.utils.book_new();
     
     const summaryData = Object.entries(totalsByType).map(([type, amount]) => ({
@@ -80,6 +93,13 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
     }));
     const feesWS = XLSX.utils.json_to_sheet(feesData);
     XLSX.utils.book_append_sheet(workbook, feesWS, "Fees Over Time");
+
+    const recipientsExcelData = recipientsData.map(item => ({
+      Recipient: item.name,
+      Frequency: item.value
+    }));
+    const recipientsWS = XLSX.utils.json_to_sheet(recipientsExcelData);
+    XLSX.utils.book_append_sheet(workbook, recipientsWS, "Recipients");
     
     const copyrightData = [
       { Notice: 'Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.' },
@@ -92,6 +112,9 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   };
 
   const exportToPDF = () => {
+    const currentExportCount = parseInt(localStorage.getItem('exportCount') || '0', 10);
+    localStorage.setItem('exportCount', (currentExportCount + 1).toString());
+    
     const doc = new jsPDF();
     
     doc.setFontSize(20);
@@ -145,6 +168,21 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
       startY: finalY,
       head: [['Date', 'Fees']],
       body: feesData,
+      didParseCell: (data) => {
+        finalY = Math.max(finalY, data.cell.y + data.cell.height);
+      }
+    });
+
+    const recipientsData = Object.entries(frequentContacts).map(([name, count]) => [
+      name || 'Unknown',
+      count.toString()
+    ]);
+    
+    finalY += 15;
+    autoTable(doc, {
+      startY: finalY,
+      head: [['Recipient', 'Frequency']],
+      body: recipientsData,
       didParseCell: (data) => {
         finalY = Math.max(finalY, data.cell.y + data.cell.height);
       }
@@ -217,25 +255,58 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         </div>
       </div>
       
-      <div className="neo-chart">
-        <h2 className="text-2xl font-bold mb-4">FEES OVER TIME</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={feesChartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-            <XAxis dataKey="date" stroke="#1A1F2C" />
-            <YAxis stroke="#1A1F2C" />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#FFFFFF', 
-                border: '2px solid #1A1F2C',
-                borderRadius: '0px'
-              }}
-              itemStyle={{ color: '#1A1F2C' }}
-              labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
-              formatter={(value) => [`${value} ${mainCurrency}`, 'Fees']}
-            />
-            <Bar dataKey="fees" fill="#FFC107" stroke="#1A1F2C" strokeWidth={2} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="neo-chart">
+          <h2 className="text-2xl font-bold mb-4">FEES OVER TIME</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={feesChartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <XAxis dataKey="date" stroke="#1A1F2C" />
+              <YAxis stroke="#1A1F2C" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#FFFFFF', 
+                  border: '2px solid #1A1F2C',
+                  borderRadius: '0px'
+                }}
+                itemStyle={{ color: '#1A1F2C' }}
+                labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
+                formatter={(value) => [`${value} ${mainCurrency}`, 'Fees']}
+              />
+              <Bar dataKey="fees" fill="#FFC107" stroke="#1A1F2C" strokeWidth={2} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="neo-chart">
+          <h2 className="text-2xl font-bold mb-4">TRANSACTION RECIPIENTS</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={recipientsData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {recipientsData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
+                ))}
+              </Pie>
+              <Tooltip 
+                formatter={(value) => [`${value} transactions`, 'Frequency']}
+                contentStyle={{ 
+                  backgroundColor: '#FFFFFF', 
+                  border: '2px solid #1A1F2C',
+                  borderRadius: '0px'
+                }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
