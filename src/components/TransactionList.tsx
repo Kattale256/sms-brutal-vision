@@ -11,7 +11,6 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   
-  // Updated type labels
   const typeLabels = {
     send: 'Sent',
     receive: 'Received',
@@ -20,7 +19,6 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
     deposit: 'Deposit'
   };
   
-  // Handle sort
   const handleSort = (field: keyof Transaction) => {
     if (field === sortField) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -30,15 +28,12 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
     }
   };
   
-  // Get unique transaction types
   const transactionTypes = [...new Set(transactions.map(t => t.type))];
   
-  // Filter transactions by type
   const filteredTransactions = selectedType
     ? transactions.filter(t => t.type === selectedType)
     : transactions;
   
-  // Sort transactions
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     if (sortField === 'timestamp') {
       const dateA = new Date(a[sortField]).getTime();
@@ -87,6 +82,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>#</TableHead>
               <TableHead onClick={() => handleSort('type')} className="cursor-pointer">
                 Type {sortField === 'type' && (sortDirection === 'asc' ? '▲' : '▼')}
               </TableHead>
@@ -105,8 +101,9 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
           </TableHeader>
           <TableBody>
             {sortedTransactions.length > 0 ? (
-              sortedTransactions.map((transaction) => (
+              sortedTransactions.map((transaction, idx) => (
                 <TableRow key={transaction.id}>
+                  <TableCell>{idx + 1}</TableCell>
                   <TableCell className="font-medium">
                     {typeLabels[transaction.type]}
                   </TableCell>
@@ -160,7 +157,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-4">
+                <TableCell colSpan={7} className="text-center py-4">
                   No transactions found
                 </TableCell>
               </TableRow>

@@ -61,25 +61,36 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
 
   const exportToPDF = (surveyData: SurveyQuestion[]) => {
     const doc = new jsPDF();
-    
-    doc.setFontSize(20);
+
+    doc.setFontSize(14);
+    // Underlined heading
+    doc.setFont(undefined, "bold");
     doc.text("Survey Results", 20, 20);
-    
-    const data = surveyData.map(q => [q.text, q.answer?.toString() || '']);
-    
-    autoTable(doc, {
-      startY: 30,
-      head: [['Question', 'Rating (0-5)']],
-      body: data
+    doc.setLineWidth(0.5);
+    doc.line(20, 22, 80, 22);
+    doc.setFont(undefined, "normal");
+
+    let y = 30;
+    surveyData.forEach((q, i) => {
+      doc.setFontSize(12);
+      // Underline question
+      doc.setFont(undefined, "bold");
+      doc.text(`${i + 1}. ${q.text}`, 20, y);
+      // Draw underline
+      const textWidth = doc.getTextWidth(`${i + 1}. ${q.text}`);
+      doc.line(20, y + 2, 20 + textWidth, y + 2);
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(12);
+      doc.text(`Rating: ${q.answer !== null ? q.answer : ""}`, 25, y + 8);
+      y += 18;
     });
-    
-    const finalY = (doc as any).lastAutoTable.finalY;
-    
+
+    // Copyright at bottom
     doc.setFontSize(10);
-    doc.text("Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.", 20, finalY + 20);
-    doc.text("(c) 2025 FIRM D1, LDC KAMPALA", 20, finalY + 25);
-    
-    // Create a blob and return it
+    y += 12;
+    doc.text("Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.", 20, y);
+    doc.text("(c) 2025 FIRM D1, LDC KAMPALA", 20, y + 5);
+
     return doc.output('blob');
   };
 
@@ -87,14 +98,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
     try {
       const excelBlob = exportToExcel(questions);
       const pdfBlob = exportToPDF(questions);
-      
-      // In a real application, you would use a backend service to send this email
-      // For demo purposes, we'll just show a toast notification
-      toast({
-        title: "Survey results sent",
-        description: "Your survey response has been recorded and sent to kattaleglobal@gmail.com"
-      });
-      
+      // Just silently "send", no notification anymore
     } catch (error) {
       console.error("Error sending survey:", error);
       toast({
@@ -107,7 +111,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAllQuestionsAnswered) {
       toast({
         title: "Please complete the survey",
@@ -116,12 +120,13 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ onComplete }) => {
       });
       return;
     }
-    
+
     await sendEmail();
     setStep('thank-you');
   };
 
   if (step === 'thank-you') {
+    // message about sending to email removed
     return (
       <div className="neo-card p-8 text-center">
         <h2 className="text-2xl font-bold mb-4">THANK YOU!</h2>

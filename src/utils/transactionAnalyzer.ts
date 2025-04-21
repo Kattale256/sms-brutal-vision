@@ -86,12 +86,18 @@ export const getTransactionsByDate = (transactions: Transaction[]): Record<strin
 export const getFrequentContacts = (transactions: Transaction[]): Record<string, number> => {
   const contacts: Record<string, number> = {};
   
-  transactions.forEach(transaction => {
-    const contact = transaction.type === 'send' ? transaction.recipient : transaction.sender;
-    if (contact) {
-      contacts[contact] = (contacts[contact] || 0) + 1;
-    }
-  });
+  transactions
+    .filter(
+      t =>
+        t.type === 'send' &&
+        typeof t.reference === 'string' &&
+        t.reference.toString().toLowerCase().includes('you have sent')
+    )
+    .forEach(transaction => {
+      if (transaction.recipient) {
+        contacts[transaction.recipient] = (contacts[transaction.recipient] || 0) + 1;
+      }
+    });
   
   // Sort by frequency and take top 5
   return Object.fromEntries(
