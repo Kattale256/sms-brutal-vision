@@ -1,28 +1,23 @@
+
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Transaction } from '../services/SmsReader';
-import { getBalanceHistory, getTransactionsByDate } from '../utils/transactionAnalyzer';
+import { getTransactionsByDate } from '../utils/transactionAnalyzer';
 
 interface TransactionTimelineProps {
   transactions: Transaction[];
 }
 
 const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ transactions }) => {
-  const balanceHistory = getBalanceHistory(transactions);
+  // Display only transactions per day
   const transactionsByDate = getTransactionsByDate(transactions);
-  
-  // Format data for the charts
-  const balanceData = Object.entries(balanceHistory).map(([date, balance]) => ({
-    date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    balance
-  }));
-  
+
   const activityData = Object.entries(transactionsByDate).map(([date, count]) => ({
     date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     count
   }));
 
-  // Get the most frequent currency
+  // Get the most frequent currency for display (if desired in tooltip)
   const currencyMap: Record<string, number> = {};
   transactions.forEach(t => {
     currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
@@ -31,27 +26,27 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ transactions 
 
   return (
     <div className="neo-chart">
-      <h2 className="text-2xl font-bold mb-4">BALANCE HISTORY</h2>
+      <h2 className="text-2xl font-bold mb-4">TRANSACTION ACTIVITY OVER TIME</h2>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={balanceData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+        <LineChart data={activityData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
           <XAxis dataKey="date" stroke="#1A1F2C" />
           <YAxis stroke="#1A1F2C" />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#FFFFFF', 
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#FFFFFF',
               border: '2px solid #1A1F2C',
               borderRadius: '0px'
             }}
             itemStyle={{ color: '#1A1F2C' }}
             labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
-            formatter={(value) => [`${value} ${mainCurrency}`, 'Balance']}
+            formatter={(value) => [`${value}`, 'Transactions']}
           />
-          <Line 
-            type="monotone" 
-            dataKey="balance" 
-            stroke="#1A1F2C" 
+          <Line
+            type="monotone"
+            dataKey="count"
+            stroke="#1A1F2C"
             strokeWidth={3}
-            dot={{ stroke: '#1A1F2C', strokeWidth: 2, fill: '#4CAF50', r: 5 }}
+            dot={{ stroke: '#1A1F2C', strokeWidth: 2, fill: '#FF5252', r: 5 }}
             activeDot={{ stroke: '#1A1F2C', strokeWidth: 2, fill: '#FFD600', r: 7 }}
           />
         </LineChart>

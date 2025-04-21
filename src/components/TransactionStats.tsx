@@ -59,6 +59,12 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   });
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
+  const recipientsPieData = Object.entries(frequentContacts)
+    .map(([name, count]) => ({
+      name: name || 'Unknown',
+      value: count
+    }));
+
   const recipientsData = Object.entries(frequentContacts)
     .map(([name, count]) => ({
       name: name || 'Unknown',
@@ -231,27 +237,34 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         </div>
         
         <div className="neo-chart">
-          <h2 className="text-2xl font-bold mb-4">FINANCIAL OVERVIEW</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border-2 border-neo-black p-4">
-              <h3 className="text-lg font-bold">MONEY IN</h3>
-              <p className="text-2xl font-bold text-green-600">{totalIncome.toFixed(2)} {mainCurrency}</p>
-            </div>
-            <div className="border-2 border-neo-black p-4">
-              <h3 className="text-lg font-bold">MONEY OUT</h3>
-              <p className="text-2xl font-bold text-red-600">{totalOut.toFixed(2)} {mainCurrency}</p>
-            </div>
-            <div className="border-2 border-neo-black p-4">
-              <h3 className="text-lg font-bold">FEES PAID</h3>
-              <p className="text-2xl font-bold text-neo-gray">{totalFees.toFixed(2)} {mainCurrency}</p>
-            </div>
-            <div className="border-2 border-neo-black p-4">
-              <h3 className="text-lg font-bold">FINANCIAL HEALTH</h3>
-              <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {balance.toFixed(2)} {mainCurrency}
-              </p>
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold mb-4">RECIPIENTS PIE CHART</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={recipientsPieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#36A2EB"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {recipientsPieData.map((entry, index) => (
+                  <Cell key={`pie-cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value) => [`${value} transactions`, 'Frequency']}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '2px solid #1A1F2C',
+                  borderRadius: '0px'
+                }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
       
@@ -276,37 +289,7 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="neo-chart">
-          <h2 className="text-2xl font-bold mb-4">TRANSACTION RECIPIENTS</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={recipientsData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-              >
-                {recipientsData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value) => [`${value} transactions`, 'Frequency']}
-                contentStyle={{ 
-                  backgroundColor: '#FFFFFF', 
-                  border: '2px solid #1A1F2C',
-                  borderRadius: '0px'
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <div></div>
       </div>
     </div>
   );

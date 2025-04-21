@@ -9,9 +9,14 @@ interface TransactionContactsProps {
 }
 
 const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions }) => {
-  const frequentContacts = getFrequentContacts(transactions);
+  // Sort and get top 5 contacts, descending by transaction frequency
+  const frequentContactsObj = getFrequentContacts(transactions);
+  const frequentContactsSorted = Object.entries(frequentContactsObj)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
   const averageAmounts = getAverageTransactionAmount(transactions);
-  
+
   // Format labels for transaction types
   const typeLabels = {
     send: 'Sent',
@@ -29,7 +34,6 @@ const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions 
   });
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'UGX';
 
-  // Icons for transaction types
   const typeIcons = {
     send: <ArrowUpRight className="h-5 w-5" />,
     receive: <ArrowDownRight className="h-5 w-5" />,
@@ -44,8 +48,8 @@ const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions 
       <div className="neo-card">
         <h2 className="text-2xl font-bold mb-4">TOP CONTACTS</h2>
         <div className="space-y-2">
-          {Object.entries(frequentContacts).length > 0 ? (
-            Object.entries(frequentContacts).map(([contact, count], index) => (
+          {frequentContactsSorted.length > 0 ? (
+            frequentContactsSorted.map(([contact, count], index) => (
               <div key={contact} className="flex justify-between items-center border-b-2 border-neo-black pb-2">
                 <div className="flex items-center">
                   <div className="w-8 h-8 rounded-none bg-neo-yellow border-2 border-neo-black flex items-center justify-center mr-3">
