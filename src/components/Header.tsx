@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/SmsReader';
 import { Transaction } from '../services/SmsReader';
 import { Clipboard, Smartphone } from 'lucide-react';
-import SurveyForm from './SurveyForm';
 
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
@@ -16,9 +15,7 @@ const Header: React.FC<{
   const { toast } = useToast();
   const smsReader = SmsReader.getInstance();
   const [showPasteDialog, setShowPasteDialog] = useState(false);
-  const [showSurvey, setShowSurvey] = useState(false);
   const [pastedText, setPastedText] = useState('');
-  const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
 
   const handleSmsImport = async () => {
     if (smsReader.isNativePlatform()) {
@@ -72,9 +69,12 @@ const Header: React.FC<{
           title: "Success!",
           description: `${transactions.length} transactions extracted.`
         });
-        setParsedTransactions(transactions);
         setShowPasteDialog(false);
-        setShowSurvey(true);
+        
+        // Directly import transactions without showing survey
+        if (onTransactionsImport) {
+          onTransactionsImport(transactions);
+        }
       } else {
         toast({
           title: "No transactions found",
@@ -89,13 +89,6 @@ const Header: React.FC<{
         description: "There was an error processing the pasted text. Please check the format.",
         variant: "destructive"
       });
-    }
-  };
-
-  const handleSurveyComplete = () => {
-    setShowSurvey(false);
-    if (onTransactionsImport && parsedTransactions.length > 0) {
-      onTransactionsImport(parsedTransactions);
     }
   };
 
@@ -137,12 +130,6 @@ const Header: React.FC<{
                 PROCESS
               </button>
             </div>
-          </div>
-        </div>}
-
-      {showSurvey && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="neo-card max-w-xl w-full m-4">
-            <SurveyForm onComplete={handleSurveyComplete} />
           </div>
         </div>}
     </header>;

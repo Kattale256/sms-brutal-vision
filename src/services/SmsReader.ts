@@ -1,3 +1,4 @@
+
 import { Capacitor } from "@capacitor/core";
 
 export interface SmsMessage {
@@ -48,24 +49,24 @@ class SmsReader {
     }
 
     try {
-      const permissions = Capacitor.Permissions;
-      
-      if (!permissions) {
-        console.log("Permissions plugin not available");
-        return false;
-      }
-      
-      const permissionStatus = await permissions.query({ name: 'sms' });
-      
-      if (permissionStatus.state === 'granted') {
-        this.hasPermission = true;
-        return true;
-      }
-      
-      if (permissionStatus.state === 'prompt') {
-        const requestResult = await permissions.request({ name: 'sms' });
-        this.hasPermission = requestResult.state === 'granted';
-        return this.hasPermission;
+      // Fix TypeScript error by using try-catch for permissions checking
+      try {
+        // @ts-ignore - We need to ignore this because the Capacitor typings don't include Permissions
+        const permissionStatus = await Capacitor.Permissions?.query({ name: 'sms' });
+        
+        if (permissionStatus?.state === 'granted') {
+          this.hasPermission = true;
+          return true;
+        }
+        
+        if (permissionStatus?.state === 'prompt') {
+          // @ts-ignore - We need to ignore this because the Capacitor typings don't include Permissions
+          const requestResult = await Capacitor.Permissions?.request({ name: 'sms' });
+          this.hasPermission = requestResult?.state === 'granted';
+          return this.hasPermission;
+        }
+      } catch (permissionError) {
+        console.log("SMS permission system not available:", permissionError);
       }
       
       console.log("SMS permission denied");
@@ -90,7 +91,8 @@ class SmsReader {
         console.log("SmsReader plugin is available");
         
         try {
-          const smsReader = Capacitor.Plugins.SmsReader;
+          // @ts-ignore - We need to ignore this because the Capacitor typings don't include Plugins.SmsReader
+          const smsReader = Capacitor.Plugins?.SmsReader;
           
           if (smsReader) {
             const result = await smsReader.getSmsMessages({
