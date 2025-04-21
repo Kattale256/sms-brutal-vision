@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Transaction } from '../services/SmsReader';
@@ -60,6 +61,7 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
   const recipientsPieData = Object.entries(frequentContacts)
+    .slice(0, 5)
     .map(([name, count]) => ({
       name: name || 'Unknown',
       value: count
@@ -214,9 +216,32 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         </Button>
       </div>
       
+      {/* Transaction Summary Section */}
+      <div className="neo-card">
+        <h2 className="text-2xl font-bold mb-4">TRANSACTION SUMMARY</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 border-2 border-neo-black bg-neo-yellow">
+            <div className="text-sm font-medium">AMOUNT SENT</div>
+            <div className="text-2xl font-bold mt-1">{totalsByType.send.toFixed(2)} {mainCurrency}</div>
+          </div>
+          <div className="p-4 border-2 border-neo-black bg-neo-yellow">
+            <div className="text-sm font-medium">AMOUNT RECEIVED</div>
+            <div className="text-2xl font-bold mt-1">{totalIncome.toFixed(2)} {mainCurrency}</div>
+          </div>
+          <div className="p-4 border-2 border-neo-black bg-neo-yellow">
+            <div className="text-sm font-medium">FEES PAID</div>
+            <div className="text-2xl font-bold mt-1">{totalFees.toFixed(2)} {mainCurrency}</div>
+          </div>
+          <div className="p-4 border-2 border-neo-black bg-neo-yellow">
+            <div className="text-sm font-medium">FINANCIAL POSITION</div>
+            <div className="text-2xl font-bold mt-1">{balance.toFixed(2)} {mainCurrency}</div>
+          </div>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="neo-chart">
-          <h2 className="text-2xl font-bold mb-4">TRANSACTION SUMMARY</h2>
+          <h2 className="text-2xl font-bold mb-4">TRANSACTION BREAKDOWN</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <XAxis dataKey="name" stroke="#1A1F2C" />
@@ -238,33 +263,39 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         
         <div className="neo-chart">
           <h2 className="text-2xl font-bold mb-4">RECIPIENTS PIE CHART</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={recipientsPieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#36A2EB"
-                dataKey="value"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-              >
-                {recipientsPieData.map((entry, index) => (
-                  <Cell key={`pie-cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => [`${value} transactions`, 'Frequency']}
-                contentStyle={{
-                  backgroundColor: '#FFFFFF',
-                  border: '2px solid #1A1F2C',
-                  borderRadius: '0px'
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {recipientsPieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={recipientsPieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#36A2EB"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {recipientsPieData.map((entry, index) => (
+                    <Cell key={`pie-cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [`${value} transactions`, 'Frequency']}
+                  contentStyle={{
+                    backgroundColor: '#FFFFFF',
+                    border: '2px solid #1A1F2C',
+                    borderRadius: '0px'
+                  }}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-neo-gray">
+              No recipient data available
+            </div>
+          )}
         </div>
       </div>
       

@@ -7,11 +7,12 @@ export const getTotalsByType = (transactions: Transaction[]): Record<string, num
     receive: 0,
     payment: 0,
     withdrawal: 0,
-    deposit: 0
+    deposit: 0,
+    other: 0
   };
   
   transactions.forEach(transaction => {
-    totals[transaction.type] += transaction.amount;
+    totals[transaction.type] = (totals[transaction.type] || 0) + transaction.amount;
   });
   
   return totals;
@@ -87,25 +88,14 @@ export const getTransactionsByDate = (transactions: Transaction[]): Record<strin
 export const getFrequentContacts = (transactions: Transaction[]): Record<string, number> => {
   const contacts: Record<string, number> = {};
   
-  transactions
-    .filter(
-      t =>
-        t.type === 'send' &&
-        typeof t.reference === 'string' &&
-        t.reference.toString().toLowerCase().includes('you have sent')
-    )
-    .forEach(transaction => {
-      if (transaction.recipient) {
-        contacts[transaction.recipient] = (contacts[transaction.recipient] || 0) + 1;
-      }
-    });
+  transactions.forEach(transaction => {
+    // Include all transactions where recipient is present
+    if (transaction.recipient && transaction.recipient.trim() !== "") {
+      contacts[transaction.recipient] = (contacts[transaction.recipient] || 0) + 1;
+    }
+  });
   
-  // Sort by frequency and take top 5
-  return Object.fromEntries(
-    Object.entries(contacts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-  );
+  return contacts;
 };
 
 export const getAverageTransactionAmount = (transactions: Transaction[]): Record<string, number> => {
@@ -114,12 +104,17 @@ export const getAverageTransactionAmount = (transactions: Transaction[]): Record
     receive: {sum: 0, count: 0},
     payment: {sum: 0, count: 0},
     withdrawal: {sum: 0, count: 0},
-    deposit: {sum: 0, count: 0}
+    deposit: {sum: 0, count: 0},
+    other: {sum: 0, count: 0}
   };
   
   transactions.forEach(transaction => {
-    totals[transaction.type].sum += transaction.amount;
-    totals[transaction.type].count += 1;
+    const type = transaction.type || 'other';
+    if (!totals[type]) {
+      totals[type] = {sum: 0, count: 0};
+    }
+    totals[type].sum += transaction.amount;
+    totals[type].count += 1;
   });
   
   const averages: Record<string, number> = {};
