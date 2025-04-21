@@ -1,3 +1,4 @@
+
 import { Transaction } from '../services/SmsReader';
 
 export const getTotalsByType = (transactions: Transaction[]): Record<string, number> => {

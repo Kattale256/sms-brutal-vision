@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import MessageStats from '../components/MessageStats';
@@ -9,6 +10,7 @@ import { Transaction } from '../services/SmsReader';
 import { Capacitor } from '@capacitor/core';
 import TransactionStats from '../components/TransactionStats';
 import TransactionTimeline from '../components/TransactionTimeline';
+import TransactionCalendar from '../components/TransactionCalendar';
 import TransactionContacts from '../components/TransactionContacts';
 import TransactionList from '../components/TransactionList';
 import SurveyForm from '../components/SurveyForm';
@@ -37,19 +39,27 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    if (scrollBottomCount >= 3 && !showSurvey && !showSurveyPrompt) {
+    if (scrollBottomCount >= 3 && !showSurvey && !showSurveyPrompt && activeView === 'transactions' && transactions.length > 0) {
       setShowSurveyPrompt(true);
     }
-  }, [scrollBottomCount, showSurvey, showSurveyPrompt]);
+  }, [scrollBottomCount, showSurvey, showSurveyPrompt, activeView, transactions]);
 
   const handleSmsImport = (importedMessages: SmsMessage[]) => {
     setMessages(importedMessages);
     setActiveView('sms');
+    // Reset survey state when importing new data
+    setShowSurveyPrompt(false);
+    setShowSurvey(false);
+    setScrollBottomCount(0);
   };
 
   const handleTransactionsImport = (importedTransactions: Transaction[]) => {
     setTransactions(importedTransactions);
     setActiveView('transactions');
+    // Reset survey state when importing new data
+    setShowSurveyPrompt(false);
+    setShowSurvey(false);
+    setScrollBottomCount(0);
   };
 
   const handleSurveyLater = () => setShowSurveyPrompt(false);
