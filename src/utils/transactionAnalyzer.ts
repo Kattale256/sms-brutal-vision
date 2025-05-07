@@ -89,8 +89,10 @@ export const getFrequentContacts = (transactions: Transaction[]): Record<string,
   const contacts: Record<string, number> = {};
   
   transactions.forEach(transaction => {
-    // Include all transactions where recipient is present
-    if (transaction.recipient && transaction.recipient.trim() !== "") {
+    // Include all transactions where recipient is present and not 'business charges'
+    if (transaction.recipient && 
+        transaction.recipient.trim() !== "" && 
+        transaction.recipient.toLowerCase() !== "business charges") {
       contacts[transaction.recipient] = (contacts[transaction.recipient] || 0) + 1;
     }
   });

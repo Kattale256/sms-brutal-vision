@@ -3,6 +3,9 @@ import React from 'react';
 import { Transaction } from '../services/SmsReader';
 import { getFrequentContacts, getAverageTransactionAmount } from '../utils/transactionAnalyzer';
 import { ArrowUpRight, ArrowDownRight, CreditCard, Banknote } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Handle } from './ui/dnd-handle';
 
 interface TransactionContactsProps {
   transactions: Transaction[];
@@ -43,9 +46,38 @@ const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions 
     other: <CreditCard className="h-5 w-5" />
   };
 
+  const {
+    attributes: topContactsAttributes,
+    listeners: topContactsListeners,
+    setNodeRef: setTopContactsRef,
+    transform: topContactsTransform,
+    transition: topContactsTransition
+  } = useSortable({ id: "top-contacts" });
+
+  const {
+    attributes: averageAmountsAttributes,
+    listeners: averageAmountsListeners,
+    setNodeRef: setAverageAmountsRef,
+    transform: averageAmountsTransform,
+    transition: averageAmountsTransition
+  } = useSortable({ id: "average-amounts" });
+
+  const topContactsStyle = {
+    transform: CSS.Transform.toString(topContactsTransform),
+    transition: topContactsTransition,
+  };
+
+  const averageAmountsStyle = {
+    transform: CSS.Transform.toString(averageAmountsTransform),
+    transition: averageAmountsTransition,
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-      <div className="neo-card">
+      <div ref={setTopContactsRef} style={topContactsStyle} className="neo-card relative">
+        <div className="absolute top-2 right-2 cursor-move" {...topContactsAttributes} {...topContactsListeners}>
+          <Handle />
+        </div>
         <h2 className="text-2xl font-bold mb-4">TOP CONTACTS</h2>
         <div className="space-y-2">
           {frequentContactsSorted.length > 0 ? (
@@ -66,7 +98,10 @@ const TransactionContacts: React.FC<TransactionContactsProps> = ({ transactions 
         </div>
       </div>
 
-      <div className="neo-card">
+      <div ref={setAverageAmountsRef} style={averageAmountsStyle} className="neo-card relative">
+        <div className="absolute top-2 right-2 cursor-move" {...averageAmountsAttributes} {...averageAmountsListeners}>
+          <Handle />
+        </div>
         <h2 className="text-2xl font-bold mb-4">AVERAGE AMOUNTS</h2>
         <div className="space-y-2">
           {Object.entries(averageAmounts)
