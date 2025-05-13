@@ -115,7 +115,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions }) => {
     
     // Title
     doc.setFontSize(20);
-    doc.text("Transaction Statistics Report", 20, 20);
+    doc.text("Transaction Statistics Visualizations", 20, 20);
     
     // Use charts for visualization
     let yPosition = 30;
@@ -150,11 +150,41 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions }) => {
           ctx.font = '12px Arial';
           ctx.textAlign = 'center';
           ctx.fillText(item.name, x + barWidth/2 - 5, 295);
+          
+          // Draw value
+          ctx.fillText(`${item.amount.toFixed(0)} ${mainCurrency}`, x + barWidth/2 - 5, 280 - barHeight - 10);
         });
         
         // Add image to PDF
         doc.addImage(canvas.toDataURL(), 'PNG', 10, yPosition, 190, 100);
         yPosition += 110;
+      }
+    }
+    
+    // Taxes Chart
+    if (totalTaxes > 0) {
+      doc.setFontSize(16);
+      doc.text("TAXES PAID", 20, yPosition);
+      yPosition += 10;
+      
+      // Create canvas for tax chart
+      const canvas = document.createElement('canvas');
+      canvas.width = 550;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.fillStyle = '#4BC0C0';
+        ctx.fillRect(50, 150, 400, 50);
+        
+        ctx.fillStyle = '#000';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Taxes: ${totalTaxes.toFixed(2)} ${mainCurrency}`, 250, 180);
+        
+        // Add image to PDF
+        doc.addImage(canvas.toDataURL(), 'PNG', 10, yPosition, 190, 80);
+        yPosition += 90;
       }
     }
     
@@ -261,12 +291,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions }) => {
       }
     }
     
-    // Add copyright notice at the bottom
-    doc.setFontSize(10);
-    doc.text("Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.", 20, 280);
-    doc.text("(c) 2025 FIRM D1, LDC KAMPALA", 20, 285);
-    
-    doc.save("transaction-stats.pdf");
+    doc.save("transaction-visualizations.pdf");
   };
 
   return (

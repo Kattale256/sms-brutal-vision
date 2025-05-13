@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { SmsMessage } from '../data/sampleData';
 import { categorizeMessage } from '../utils/smsAnalyzer';
+import MessageCategorization from './MessageCategorization';
 
 interface MessageListProps {
   messages: SmsMessage[];
@@ -9,6 +10,7 @@ interface MessageListProps {
 
 const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const [filter, setFilter] = useState<string>('');
+  const [categorizedMessages, setCategorizedMessages] = useState<Record<string, {category: string, subCategory: string}>>({});
   
   const filteredMessages = messages.filter(msg => {
     if (!filter) return true;
@@ -17,6 +19,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
            msg.content.toLowerCase().includes(filter.toLowerCase()) ||
            msg.sender.toLowerCase().includes(filter.toLowerCase());
   });
+
+  const handleCategorize = (messageId: string, category: string, subCategory: string) => {
+    setCategorizedMessages(prev => ({
+      ...prev,
+      [messageId]: { category, subCategory }
+    }));
+  };
 
   const getCategoryColor = (category: string): string => {
     const categories: Record<string, string> = {
@@ -29,7 +38,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       transportation: 'bg-indigo-500',
       bills: 'bg-orange-500',
       marketing: 'bg-teal-500',
-      work: 'bg-cyan-500'
+      work: 'bg-cyan-500',
+      'business-income': 'bg-emerald-500',
+      'business-expense': 'bg-amber-500'
     };
     
     return categories[category] || 'bg-gray-500';
@@ -53,17 +64,29 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       <div className="overflow-hidden">
         <div className="max-h-96 overflow-y-auto">
           {filteredMessages.map((message) => {
-            const category = message.category || categorizeMessage(message);
+            const systemCategory = message.category || categorizeMessage(message);
+            const userCategory = categorizedMessages[message.id]?.category;
+            const userSubCategory = categorizedMessages[message.id]?.subCategory;
             const date = new Date(message.timestamp).toLocaleString();
             
             return (
               <div key={message.id} className="border-2 border-neo-black p-4 mb-4 bg-neo-white">
                 <div className="flex justify-between items-start mb-2">
                   <div className="font-bold">{message.sender}</div>
-                  <div className="flex items-center">
-                    <div className={`px-3 py-1 border-2 border-neo-black ${getCategoryColor(category)}`}>
-                      {category.toUpperCase()}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {userCategory ? (
+                      <div className={`px-3 py-1 border-2 border-neo-black ${getCategoryColor(userCategory)}`}>
+                        {userSubCategory ? userSubCategory.toUpperCase() : userCategory.toUpperCase()}
+                      </div>
+                    ) : (
+                      <div className={`px-3 py-1 border-2 border-neo-black ${getCategoryColor(systemCategory)}`}>
+                        {systemCategory.toUpperCase()}
+                      </div>
+                    )}
+                    <MessageCategorization 
+                      message={message}
+                      onCategorize={handleCategorize}
+                    />
                   </div>
                 </div>
                 <p className="mb-2">{message.content}</p>

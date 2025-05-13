@@ -37,7 +37,7 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transactions })
           <div className="text-2xl font-bold mt-1">{totalFees.toFixed(2)} {mainCurrency}</div>
         </div>
         <div className="p-4 border-2 border-neo-black bg-neo-yellow">
-          <div className="text-sm font-medium">TAXES</div>
+          <div className="text-sm font-medium">TAXES PAID</div>
           <div className="text-2xl font-bold mt-1">{totalTaxes.toFixed(2)} {mainCurrency}</div>
         </div>
       </div>
