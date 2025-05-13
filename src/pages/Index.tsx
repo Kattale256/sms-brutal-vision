@@ -8,55 +8,26 @@ import MessageList from '../components/MessageList';
 import { sampleSmsData, SmsMessage } from '../data/sampleData';
 import { Transaction } from '../services/SmsReader';
 import { Capacitor } from '@capacitor/core';
-import TransactionStats from '../components/TransactionStats';
+import TransactionStats from '../components/transaction-stats';
 import TransactionTimeline from '../components/TransactionTimeline';
 import TransactionCalendar from '../components/TransactionCalendar';
 import TransactionContacts from '../components/TransactionContacts';
 import TransactionList from '../components/TransactionList';
-import { 
-  DndContext, 
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent 
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
 
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeView, setActiveView] = useState<'sms' | 'transactions'>('sms');
   const [scrollBottomCount, setScrollBottomCount] = useState(0);
-  
-  // For drag and drop
   const [sectionOrder, setSectionOrder] = useState([
     'transaction-stats',
     'transaction-timeline',
     'transaction-calendar',
     'top-contacts',
-    'average-amounts',
     'transaction-list'
   ]);
-
+  
   const resultsRef = useRef<HTMLDivElement>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,18 +52,6 @@ const Index = () => {
     setTransactions(importedTransactions);
     setActiveView('transactions');
     setScrollBottomCount(0);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setSectionOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
   };
 
   const renderTransactionSections = () => {
@@ -144,18 +103,7 @@ const Index = () => {
 
         <main ref={resultsRef}>
           {activeView === 'transactions' && transactions.length > 0 ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sectionOrder}
-                strategy={verticalListSortingStrategy}
-              >
-                {renderTransactionSections()}
-              </SortableContext>
-            </DndContext>
+            renderTransactionSections()
           ) : (
             <>
               <MessageStats messages={messages} />
