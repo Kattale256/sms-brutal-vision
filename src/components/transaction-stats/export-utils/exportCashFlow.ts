@@ -109,11 +109,13 @@ export const exportCashFlowToPDF = (transactions: Transaction[]) => {
   doc.setFont("helvetica", "normal");
   
   // Transactions by Category
-  let categorizedTransactions: Record<string, number> = {};
+  const categorizedTransactions: Record<string, number> = {};
   transactions.forEach(t => {
-    if (t.category) {
-      categorizedTransactions[t.category] = 
-        (categorizedTransactions[t.category] || 0) + t.amount * (t.type === 'receive' || t.type === 'deposit' ? 1 : -1);
+    // Use type as category if no specific category is available
+    const category = t.type;
+    if (category) {
+      categorizedTransactions[category] = 
+        (categorizedTransactions[category] || 0) + t.amount * (t.type === 'receive' || t.type === 'deposit' ? 1 : -1);
     }
   });
   

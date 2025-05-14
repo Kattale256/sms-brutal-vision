@@ -52,7 +52,12 @@ const TaxesChart: React.FC<TaxesChartProps> = ({ transactions }) => {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => `${value.toFixed(2)} ${mainCurrency}`} />
+            <Tooltip formatter={(value) => {
+              if (typeof value === 'number') {
+                return `${value.toFixed(2)} ${mainCurrency}`;
+              }
+              return `${value} ${mainCurrency}`;
+            }} />
             <Legend 
               formatter={(value, entry, index) => {
                 const item = data[index];
