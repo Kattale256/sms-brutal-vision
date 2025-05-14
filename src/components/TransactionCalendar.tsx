@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from './ui/calendar';
 import { Transaction } from '../services/SmsReader';
 import { useSortable } from '@dnd-kit/sortable';
@@ -36,13 +36,15 @@ const TransactionCalendar: React.FC<TransactionCalendarProps> = ({ transactions 
   const currentDate = new Date();
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
   
-  // Create tabs data
-  const currentMonthIdx = monthArray.findIndex(
-    m => m.getMonth() === currentDate.getMonth() && m.getFullYear() === currentDate.getFullYear()
-  );
-  if (currentMonthIdx !== -1) {
-    setSelectedMonthIndex(currentMonthIdx);
-  }
+  // Use useEffect to set the initial month index instead of doing it during render
+  useEffect(() => {
+    const currentMonthIdx = monthArray.findIndex(
+      m => m.getMonth() === currentDate.getMonth() && m.getFullYear() === currentDate.getFullYear()
+    );
+    if (currentMonthIdx !== -1) {
+      setSelectedMonthIndex(currentMonthIdx);
+    }
+  }, [monthArray, currentDate]);
 
   const {
     attributes,
@@ -65,7 +67,7 @@ const TransactionCalendar: React.FC<TransactionCalendarProps> = ({ transactions 
       <h2 className="text-2xl font-bold mb-4">TRANSACTION CALENDAR</h2>
       
       {monthArray.length > 0 ? (
-        <Tabs defaultValue={monthArray[selectedMonthIndex].toISOString()} className="w-full">
+        <Tabs defaultValue={monthArray[selectedMonthIndex]?.toISOString()} className="w-full">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 w-full h-auto">
             {monthArray.map((month, index) => (
               <TabsTrigger 
