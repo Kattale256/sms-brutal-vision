@@ -20,20 +20,24 @@ const CashFlowStatement: React.FC<CashFlowStatementProps> = ({ transactions }) =
     exportCashFlowToPDF(transactions);
   };
 
-  // Calculate cash flow metrics
-  const totalsByType = getTotalsByType(transactions);
-  const totalIncome = getTotalIncome(transactions);
-  const totalExpenses = totalsByType.send + totalsByType.payment + totalsByType.withdrawal;
-  const totalFees = getTotalFees(transactions);
-  const totalTaxes = getTotalTaxes(transactions);
-  const netCashFlow = totalIncome - totalExpenses - totalFees - totalTaxes;
+  // Calculate cash flow metrics - moved to function to prevent calculations in render
+  const getFlowMetrics = () => {
+    const totalsByType = getTotalsByType(transactions);
+    const totalIncome = getTotalIncome(transactions);
+    const totalExpenses = totalsByType.send + totalsByType.payment + totalsByType.withdrawal;
+    const totalFees = getTotalFees(transactions);
+    const totalTaxes = getTotalTaxes(transactions);
+    const netCashFlow = totalIncome - totalExpenses - totalFees - totalTaxes;
 
-  // Get most common currency
-  const currencyMap: Record<string, number> = {};
-  transactions.forEach(t => {
-    currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
-  });
-  const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
+    // Get most common currency
+    const currencyMap: Record<string, number> = {};
+    transactions.forEach(t => {
+      currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
+    });
+    const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
+
+    return { totalIncome, totalExpenses, totalFees, totalTaxes, netCashFlow, mainCurrency };
+  };
 
   return (
     <Button onClick={handleDownload} variant="outline" className="gap-2">

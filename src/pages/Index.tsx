@@ -68,9 +68,9 @@ const Index = () => {
     return sectionOrder
       .filter(id => sections[id])
       .map(id => (
-        <React.Fragment key={id}>
+        <div key={id}>
           {sections[id]}
-        </React.Fragment>
+        </div>
       ));
   };
 
