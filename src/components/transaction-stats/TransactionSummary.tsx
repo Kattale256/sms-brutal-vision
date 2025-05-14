@@ -22,7 +22,7 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({
       <h2 className="text-2xl font-bold mb-4">TRANSACTION SUMMARY</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 border-2 border-neo-black bg-neo-yellow">
-          <div className="text-sm font-medium">AMOUNT SENT</div>
+          <div className="text-sm font-medium-bg-green">AMOUNT SENT</div>
           <div className="text-2xl font-bold mt-1">{totalsByType.send.toFixed(2)} {mainCurrency}</div>
         </div>
         <div className="p-4 border-2 border-neo-black bg-neo-green">
