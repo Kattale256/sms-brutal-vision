@@ -2,15 +2,29 @@
 import React, { useState } from 'react';
 import { Transaction } from '../services/SmsReader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface TransactionListProps {
   transactions: Transaction[];
+}
+
+interface TransactionCategorization {
+  id: string;
+  category: string;
+  subCategory?: string;
 }
 
 const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
   const [sortField, setSortField] = useState<keyof Transaction>('timestamp');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [categorizations, setCategorizations] = useState<TransactionCategorization[]>([]);
   
   const typeLabels = {
     send: 'Sent',
@@ -50,6 +64,66 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
       return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
     }
   });
+  
+  const handleCategoryChange = (transactionId: string, category: string) => {
+    setCategorizations(prev => {
+      const existingIndex = prev.findIndex(c => c.id === transactionId);
+      if (existingIndex >= 0) {
+        const newCategorizations = [...prev];
+        newCategorizations[existingIndex] = { 
+          ...newCategorizations[existingIndex], 
+          category,
+          subCategory: undefined // Clear subcategory when main category changes
+        };
+        return newCategorizations;
+      } else {
+        return [...prev, { id: transactionId, category }];
+      }
+    });
+  };
+  
+  const handleSubCategoryChange = (transactionId: string, subCategory: string) => {
+    setCategorizations(prev => {
+      const existingIndex = prev.findIndex(c => c.id === transactionId);
+      if (existingIndex >= 0) {
+        const newCategorizations = [...prev];
+        newCategorizations[existingIndex] = { ...newCategorizations[existingIndex], subCategory };
+        return newCategorizations;
+      }
+      return prev;
+    });
+  };
+  
+  const getCategorization = (transactionId: string) => {
+    return categorizations.find(c => c.id === transactionId);
+  };
+  
+  const BUSINESS_INCOME_SUBCATEGORIES = [
+    { value: 'sales', label: 'Sales Revenue' },
+    { value: 'service-fees', label: 'Service Fees' },
+    { value: 'consulting', label: 'Consulting' },
+    { value: 'commissions', label: 'Commissions' },
+    { value: 'rental-income', label: 'Rental Income' },
+    { value: 'royalties', label: 'Royalties' },
+    { value: 'interest', label: 'Interest' },
+    { value: 'dividends', label: 'Dividends' },
+    { value: 'other-income', label: 'Other Income' },
+  ];
+
+  const BUSINESS_EXPENSE_SUBCATEGORIES = [
+    { value: 'advertising', label: 'Advertising' },
+    { value: 'office-expenses', label: 'Office Expenses' },
+    { value: 'rent', label: 'Rent' },
+    { value: 'utilities', label: 'Utilities' },
+    { value: 'salaries-wages', label: 'Salaries & Wages' },
+    { value: 'travel', label: 'Travel' },
+    { value: 'meals-entertainment', label: 'Meals & Entertainment' },
+    { value: 'insurance', label: 'Insurance' },
+    { value: 'taxes-licenses', label: 'Taxes & Licenses' },
+    { value: 'supplies', label: 'Supplies' },
+    { value: 'repairs-maintenance', label: 'Repairs & Maintenance' },
+    { value: 'other-expenses', label: 'Other Expenses' },
+  ];
 
   return (
     <div className="neo-card mt-6">
@@ -97,68 +171,103 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
                 TID {sortField === 'reference' && (sortDirection === 'asc' ? '▲' : '▼')}
               </TableHead>
               <TableHead>Fees</TableHead>
+              <TableHead>Taxes</TableHead>
               <TableHead>Details</TableHead>
+              <TableHead>Business Category</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedTransactions.length > 0 ? (
-              sortedTransactions.map((transaction, idx) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{idx + 1}</TableCell>
-                  <TableCell className="font-medium">
-                    {typeLabels[transaction.type]}
-                  </TableCell>
-                  <TableCell className={
-                    transaction.type === 'receive' || transaction.type === 'deposit'
-                      ? 'text-green-600 font-bold' 
-                      : 'text-red-600 font-bold'
-                  }>
-                    {transaction.type === 'receive' || transaction.type === 'deposit' ? '+' : '-'}
-                    {transaction.amount.toFixed(2)} {transaction.currency}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(transaction.timestamp).toLocaleDateString()} 
-                    {' '}
-                    {new Date(transaction.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </TableCell>
-                  <TableCell>
-                    {transaction.reference || 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {transaction.fee !== undefined && transaction.fee > 0 ? (
-                      <span className="text-amber-600">{transaction.fee.toFixed(2)} {transaction.currency}</span>
-                    ) : (
-                      transaction.tax !== undefined && transaction.tax > 0 ? (
-                        <div>
-                          <span className="text-amber-600">{transaction.tax.toFixed(2)} {transaction.currency} (Tax)</span>
-                          {transaction.fee !== undefined && transaction.fee > 0 && (
-                            <span className="text-amber-600 block">
-                              {transaction.fee.toFixed(2)} {transaction.currency} (Fee)
-                            </span>
-                          )}
-                        </div>
-                      ) : 'None'
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {transaction.type === 'receive' && transaction.sender && (
-                      <div>From: {transaction.sender}</div>
-                    )}
-                    {transaction.type === 'send' && transaction.recipient && (
-                      <div>To: {transaction.recipient}</div>
-                    )}
-                    {transaction.type === 'withdrawal' && transaction.agentId && (
-                      <div>Agent ID: {transaction.agentId}</div>
-                    )}
-                    {transaction.type === 'payment' && transaction.recipient && (
-                      <div>Business: {transaction.recipient}</div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
+              sortedTransactions.map((transaction, idx) => {
+                const categorization = getCategorization(transaction.id);
+                const subcategories = categorization?.category === 'business-income' 
+                  ? BUSINESS_INCOME_SUBCATEGORIES 
+                  : BUSINESS_EXPENSE_SUBCATEGORIES;
+                
+                return (
+                  <TableRow key={transaction.id}>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell className="font-medium">
+                      {typeLabels[transaction.type as keyof typeof typeLabels]}
+                    </TableCell>
+                    <TableCell className={
+                      transaction.type === 'receive' || transaction.type === 'deposit'
+                        ? 'text-green-600 font-bold' 
+                        : 'text-red-600 font-bold'
+                    }>
+                      {transaction.type === 'receive' || transaction.type === 'deposit' ? '+' : '-'}
+                      {transaction.amount.toFixed(2)} {transaction.currency}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(transaction.timestamp).toLocaleDateString()} 
+                      {' '}
+                      {new Date(transaction.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.reference || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.fee !== undefined && transaction.fee > 0 ? (
+                        <span className="text-amber-600">{transaction.fee.toFixed(2)} {transaction.currency}</span>
+                      ) : 'None'}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.tax !== undefined && transaction.tax > 0 ? (
+                        <span className="text-amber-600">{transaction.tax.toFixed(2)} {transaction.currency}</span>
+                      ) : 'None'}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.type === 'receive' && transaction.sender && (
+                        <div>From: {transaction.sender}</div>
+                      )}
+                      {transaction.type === 'send' && transaction.recipient && (
+                        <div>To: {transaction.recipient}</div>
+                      )}
+                      {transaction.type === 'withdrawal' && transaction.agentId && (
+                        <div>Agent ID: {transaction.agentId}</div>
+                      )}
+                      {transaction.type === 'payment' && transaction.recipient && (
+                        <div>Business: {transaction.recipient}</div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col space-y-2">
+                        <Select 
+                          value={categorization?.category || ""}
+                          onValueChange={(value) => handleCategoryChange(transaction.id, value)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Categorize..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="business-income">Business Income</SelectItem>
+                            <SelectItem value="business-expense">Business Expense</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {categorization?.category && (
+                          <Select 
+                            value={categorization.subCategory || ""}
+                            onValueChange={(value) => handleSubCategoryChange(transaction.id, value)}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Subcategory..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {subcategories.map(sub => (
+                                <SelectItem key={sub.value} value={sub.value}>{sub.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={9} className="text-center py-4">
                   No transactions found
                 </TableCell>
               </TableRow>
