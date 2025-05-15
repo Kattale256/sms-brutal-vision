@@ -5,7 +5,7 @@ import { Transaction } from '../services/SmsReader';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Handle } from './ui/dnd-handle';
-import { Tabs, TabsContent, TabsList, TabsItem } from './ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 interface TransactionCalendarProps {
   transactions: Transaction[];
@@ -70,13 +70,13 @@ const TransactionCalendar: React.FC<TransactionCalendarProps> = ({ transactions 
         <Tabs defaultValue={monthArray[selectedMonthIndex]?.toISOString()} className="w-full">
           <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 w-full h-auto">
             {monthArray.map((month, index) => (
-              <TabsItem 
+              <TabsTrigger 
                 key={month.toISOString()} 
                 value={month.toISOString()}
                 className="text-xs sm:text-sm"
               >
                 {month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-              </TabsItem>
+              </TabsTrigger>
             ))}
           </TabsList>
           
