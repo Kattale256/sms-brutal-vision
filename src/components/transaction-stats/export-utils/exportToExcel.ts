@@ -9,11 +9,17 @@ import {
   getFeesByDate,
   getTotalTaxes
 } from '../../../utils/transactionAnalyzer';
+import { generateDocumentMetadata } from '../../../utils/securityUtils';
+import { QuarterInfo } from '../../../utils/quarterUtils';
+import { toast } from 'sonner';
 
-export const exportToExcel = (transactions: Transaction[]) => {
+export const exportToExcel = (transactions: Transaction[], quarterInfo?: QuarterInfo | null) => {
   // Track export count
   const currentExportCount = parseInt(localStorage.getItem('exportCount') || '0', 10);
   localStorage.setItem('exportCount', (currentExportCount + 1).toString());
+  
+  // Get document security metadata
+  const metadata = generateDocumentMetadata(transactions, quarterInfo, 'excel');
   
   // Get main currency
   const currencyMap: Record<string, number> = {};
@@ -75,14 +81,50 @@ export const exportToExcel = (transactions: Transaction[]) => {
   const recipientsWS = XLSX.utils.json_to_sheet(recipientsExcelData);
   XLSX.utils.book_append_sheet(workbook, recipientsWS, "Recipients");
   
+  // Transaction list
+  const transactionData = transactions.map(t => ({
+    Date: new Date(t.timestamp).toLocaleDateString(),
+    Time: new Date(t.timestamp).toLocaleTimeString(),
+    Type: typeLabels[t.type as keyof typeof typeLabels] || t.type,
+    Amount: `${t.amount.toFixed(2)} ${t.currency}`,
+    Fee: t.fee ? `${t.fee.toFixed(2)} ${t.currency}` : '-',
+    Tax: t.tax ? `${t.tax.toFixed(2)} ${t.currency}` : '-',
+    Reference: t.reference || '-',
+    Details: t.type === 'receive' ? `From: ${t.sender || 'Unknown'}` :
+             t.type === 'send' ? `To: ${t.recipient || 'Unknown'}` : 
+             t.type === 'payment' ? `To: ${t.recipient || 'Unknown'}` : '-'
+  }));
+  const transactionWS = XLSX.utils.json_to_sheet(transactionData);
+  XLSX.utils.book_append_sheet(workbook, transactionWS, "Transaction List");
+  
+  // Security metadata sheet
+  const securityData = [
+    { Property: 'Document ID', Value: metadata.documentId },
+    { Property: 'Generated On', Value: new Date(metadata.timestamp).toLocaleString() },
+    { Property: 'Report Period', Value: metadata.quarter || 'All Time' },
+    { Property: 'Transaction Count', Value: transactions.length },
+    { Property: 'Verification Hash', Value: metadata.hash },
+    { Property: 'Verification URL', Value: `${window.location.origin}/verify?id=${metadata.documentId}&hash=${metadata.hash}` }
+  ];
+  const securityWS = XLSX.utils.json_to_sheet(securityData);
+  XLSX.utils.book_append_sheet(workbook, securityWS, "Security Info");
+  
   // Copyright sheet
   const copyrightData = [
     { Notice: 'Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.' },
-    { Notice: '(c) 2025 FIRM D1, LDC KAMPALA' }
+    { Notice: `(c) ${new Date().getFullYear()} FIRM D1, LDC KAMPALA` },
+    { Notice: 'This is a secure document with verification enabled.' }
   ];
   const copyrightWS = XLSX.utils.json_to_sheet(copyrightData);
   XLSX.utils.book_append_sheet(workbook, copyrightWS, "Copyright");
   
+  // Generate filename based on quarter info
+  const periodText = quarterInfo ? 
+    `_${quarterInfo.label.replace(/\//g, '_')}` : 
+    '_All_Time';
+  
   // Write file
-  XLSX.writeFile(workbook, "transaction-stats.xlsx");
+  XLSX.writeFile(workbook, `transaction-stats${periodText}.xlsx`);
+  
+  toast.success(`Report exported successfully!`);
 };

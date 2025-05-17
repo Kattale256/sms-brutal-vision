@@ -9,14 +9,21 @@ import {
   getTransactionsByDate
 } from '../../../utils/transactionAnalyzer';
 import { format } from 'date-fns';
+import { generateDocumentMetadata, generateQRCodeData } from '../../../utils/securityUtils';
+import { QuarterInfo } from '../../../utils/quarterUtils';
+import { toast } from 'sonner';
 
-export const exportCashFlowToPDF = (transactions: Transaction[]) => {
+export const exportCashFlowToPDF = (transactions: Transaction[], quarterInfo?: QuarterInfo | null) => {
   // Get main currency
   const currencyMap: Record<string, number> = {};
   transactions.forEach(t => {
     currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
   });
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
+  
+  // Get document security metadata
+  const metadata = generateDocumentMetadata(transactions, quarterInfo, 'cashflow');
+  const qrCodeData = generateQRCodeData(metadata);
   
   const totalsByType = getTotalsByType(transactions);
   const totalIncome = getTotalIncome(transactions);
@@ -43,14 +50,25 @@ export const exportCashFlowToPDF = (transactions: Transaction[]) => {
   
   // Title
   doc.setFontSize(20);
-  doc.text("Cash Flow Statement", 20, 20);
+  const title = quarterInfo ? 
+    `Cash Flow Statement - ${quarterInfo.label}` :
+    'Cash Flow Statement';
+  doc.text(title, 20, 20);
   
-  // Date Range
+  // Date Range and Quarter info
   doc.setFontSize(12);
-  doc.text(
-    `Period: ${format(startDate, 'MMM d, yyyy')} - ${format(endDate, 'MMM d, yyyy')}`, 
-    20, 30
-  );
+  if (quarterInfo) {
+    doc.text(`Uganda Financial Year: ${quarterInfo.financialYear}`, 20, 30);
+    doc.text(
+      `Period: ${format(startDate, 'MMM d, yyyy')} - ${format(endDate, 'MMM d, yyyy')}`, 
+      20, 35
+    );
+  } else {
+    doc.text(
+      `Period: ${format(startDate, 'MMM d, yyyy')} - ${format(endDate, 'MMM d, yyyy')}`, 
+      20, 30
+    );
+  }
   
   let yPosition = 45;
   
@@ -141,11 +159,42 @@ export const exportCashFlowToPDF = (transactions: Transaction[]) => {
     });
   }
   
+  // Add security information
+  if (yPosition > 240) {
+    doc.addPage();
+    yPosition = 20;
+  } else {
+    yPosition += 20;
+  }
+  
+  // Security section
+  doc.setFontSize(14);
+  doc.text("Document Authentication", 20, yPosition);
+  yPosition += 10;
+  
+  doc.setFontSize(10);
+  doc.text(`Document ID: ${metadata.documentId}`, 20, yPosition);
+  yPosition += 7;
+  doc.text(`Generated: ${new Date(metadata.timestamp).toLocaleString()}`, 20, yPosition);
+  yPosition += 7;
+  doc.text(`Verification URL: ${window.location.origin}/verify?id=${metadata.documentId}`, 20, yPosition);
+  yPosition += 20;
+  
+  // QR code would be added here in a real implementation
+  doc.rect(20, yPosition, 50, 50);
+  doc.text("QR Code for Verification", 25, yPosition + 25);
+  
   // Add timestamp
-  const now = new Date();
   doc.setFontSize(10);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Generated on ${format(now, 'MMM d, yyyy h:mm a')}`, 20, 280);
+  doc.text(`Generated on ${format(new Date(), 'MMM d, yyyy h:mm a')} • Secured Document`, 20, 280);
   
-  doc.save("cash-flow-statement.pdf");
+  // Generate filename based on quarter info
+  const periodText = quarterInfo ? 
+    `_${quarterInfo.label.replace(/\//g, '_')}` : 
+    '_All_Time';
+    
+  doc.save(`cash-flow-statement${periodText}.pdf`);
+  
+  toast.success(`Cash flow statement exported successfully!`);
 };

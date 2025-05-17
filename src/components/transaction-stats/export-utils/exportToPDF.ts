@@ -6,11 +6,20 @@ import {
   getTotalFees, 
   getTotalTaxes
 } from '../../../utils/transactionAnalyzer';
+import { generateDocumentMetadata, generateQRCodeData } from '../../../utils/securityUtils';
+import { QuarterInfo } from '../../../utils/quarterUtils';
+import { toast } from 'sonner';
+import { renderToString } from 'react-dom/server';
+import SecurityFooter from '../../security/SecurityFooter';
 
-export const exportToPDF = (transactions: Transaction[]) => {
+export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterInfo | null) => {
   // Track export count
   const currentExportCount = parseInt(localStorage.getItem('exportCount') || '0', 10);
   localStorage.setItem('exportCount', (currentExportCount + 1).toString());
+  
+  // Get document security metadata
+  const metadata = generateDocumentMetadata(transactions, quarterInfo, 'pdf');
+  const qrCodeData = generateQRCodeData(metadata);
   
   // Get main currency
   const currencyMap: Record<string, number> = {};
@@ -50,9 +59,19 @@ export const exportToPDF = (transactions: Transaction[]) => {
   
   // Title
   doc.setFontSize(20);
-  doc.text("Transaction Statistics Report", 20, 20);
+  const title = quarterInfo ? 
+    `Transaction Report - ${quarterInfo.label}` :
+    'Transaction Statistics Report';
+  doc.text(title, 20, 20);
   
   let yPosition = 30;
+  
+  // Period info if quarterly
+  if (quarterInfo) {
+    doc.setFontSize(12);
+    doc.text(`Uganda Financial Year: ${quarterInfo.financialYear}`, 20, yPosition);
+    yPosition += 10;
+  }
   
   // Transaction Breakdown Chart
   if (chartData.length > 0) {
@@ -148,8 +167,33 @@ export const exportToPDF = (transactions: Transaction[]) => {
       
       // Add image to PDF
       doc.addImage(canvas.toDataURL(), 'PNG', 10, yPosition, 190, 100);
+      yPosition += 110;
     }
   }
   
-  doc.save("transaction-visualizations.pdf");
+  // Add security footer
+  if (yPosition > 240) {
+    doc.addPage(); // Add a new page if we're running out of space
+    yPosition = 20;
+  }
+  
+  // Add verification info
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Document ID: ${metadata.documentId}`, 20, 270);
+  doc.text(`Generated: ${new Date(metadata.timestamp).toLocaleString()}`, 20, 275);
+  doc.text(`Verification URL: ${window.location.origin}/verify?id=${metadata.documentId}`, 20, 280);
+  
+  // Add QR code (in a real app, this would be rendered to an image and added)
+  doc.setFontSize(8);
+  doc.text("Scan QR code to verify document authenticity", 150, 265);
+  
+  // Generate filename based on quarter info
+  const periodText = quarterInfo ? 
+    `_${quarterInfo.label.replace(/\//g, '_')}` : 
+    '_All_Time';
+
+  doc.save(`transaction-visualizations${periodText}.pdf`);
+  
+  toast.success(`Report exported successfully!`);
 };

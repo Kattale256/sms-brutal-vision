@@ -4,14 +4,22 @@ import { Button } from '../../ui/button';
 import { FileDown } from 'lucide-react';
 import { Transaction } from '../../../services/SmsReader';
 import { exportToExcel } from '../export-utils';
+import { QuarterInfo } from '../../../utils/quarterUtils';
 
 interface ExcelButtonProps {
   transactions: Transaction[];
+  onClick?: () => void;
+  selectedQuarter?: QuarterInfo | null;
 }
 
-const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions }) => {
+const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions, onClick, selectedQuarter }) => {
   const handleClick = () => {
-    exportToExcel(transactions);
+    if (onClick) {
+      onClick();
+    } else {
+      // Direct export without payment flow (for testing)
+      ExcelButton.exportToExcel(transactions, selectedQuarter);
+    }
   };
 
   return (
@@ -20,6 +28,11 @@ const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions }) => {
       Export to Excel
     </Button>
   );
+};
+
+// Static method to allow calling from payment handler
+ExcelButton.exportToExcel = (transactions: Transaction[], selectedQuarter?: QuarterInfo | null) => {
+  exportToExcel(transactions, selectedQuarter);
 };
 
 export default ExcelButton;

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Transaction } from '../../services/SmsReader';
 import TransactionSummary from './TransactionSummary';
 import TransactionBreakdown from './TransactionBreakdown';
@@ -8,30 +8,67 @@ import FeesOverTime from './FeesOverTime';
 import ExportButtons from './ExportButtons';
 import TaxesChart from './TaxesChart';
 import CashFlowStatement from './CashFlowStatement';
+import QuarterSelector from './QuarterSelector';
+import { QuarterInfo } from '../../utils/quarterUtils';
+import { filterTransactionsByQuarter } from '../../utils/quarterUtils';
 
 interface TransactionStatsProps {
   transactions: Transaction[];
 }
 
 const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => {
+  const [selectedQuarter, setSelectedQuarter] = useState<QuarterInfo | null>(null);
+  
+  // Filter transactions based on selected quarter
+  const filteredTransactions = selectedQuarter 
+    ? filterTransactionsByQuarter(
+        transactions, 
+        selectedQuarter.quarter, 
+        selectedQuarter.financialYear
+      )
+    : transactions;
+
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="flex justify-between items-center">
-        <CashFlowStatement transactions={transactions} />
-        <ExportButtons transactions={transactions} />
+        <CashFlowStatement 
+          transactions={filteredTransactions} 
+          selectedQuarter={selectedQuarter}
+        />
+        <ExportButtons 
+          transactions={filteredTransactions} 
+          selectedQuarter={selectedQuarter}
+        />
       </div>
+      
+      <QuarterSelector 
+        transactions={transactions}
+        selectedQuarter={selectedQuarter}
+        onQuarterChange={setSelectedQuarter}
+      />
       
       {/* Transaction Summary Section */}
-      <TransactionSummary transactions={transactions} />
+      <TransactionSummary 
+        transactions={filteredTransactions} 
+        selectedQuarter={selectedQuarter} 
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <TransactionBreakdown transactions={transactions} />
-        <RecipientsPieChart transactions={transactions} />
+        <TransactionBreakdown 
+          transactions={filteredTransactions} 
+        />
+        <RecipientsPieChart 
+          transactions={filteredTransactions} 
+        />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FeesOverTime transactions={transactions} />
-        <TaxesChart transactions={transactions} />
+        <FeesOverTime 
+          transactions={filteredTransactions} 
+        />
+        <TaxesChart 
+          transactions={filteredTransactions} 
+        />
       </div>
     </div>
   );
