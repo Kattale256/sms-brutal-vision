@@ -1,5 +1,5 @@
 
-import ExcelButton from './ExcelButton';
-import PDFButton from './PDFButton';
+import ExcelButton, { handleExportToExcel } from './ExcelButton';
+import PDFButton, { handleExportToPDF } from './PDFButton';
 
-export { ExcelButton, PDFButton };
+export { ExcelButton, PDFButton, handleExportToExcel, handleExportToPDF };

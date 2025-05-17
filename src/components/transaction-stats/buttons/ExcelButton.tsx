@@ -12,13 +12,18 @@ interface ExcelButtonProps {
   selectedQuarter?: QuarterInfo | null;
 }
 
+// Create a standalone export function that can be called from anywhere
+export const handleExportToExcel = (transactions: Transaction[], selectedQuarter?: QuarterInfo | null) => {
+  exportToExcel(transactions, selectedQuarter);
+};
+
 const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions, onClick, selectedQuarter }) => {
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else {
       // Direct export without payment flow (for testing)
-      ExcelButton.exportToExcel(transactions, selectedQuarter);
+      handleExportToExcel(transactions, selectedQuarter);
     }
   };
 
@@ -28,11 +33,6 @@ const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions, onClick, select
       Export to Excel
     </Button>
   );
-};
-
-// Static method to allow calling from payment handler
-ExcelButton.exportToExcel = (transactions: Transaction[], selectedQuarter?: QuarterInfo | null) => {
-  exportToExcel(transactions, selectedQuarter);
 };
 
 export default ExcelButton;

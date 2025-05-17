@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Transaction } from '../../services/SmsReader';
-import { ExcelButton, PDFButton } from './buttons';
+import { ExcelButton, PDFButton, handleExportToExcel, handleExportToPDF } from './buttons';
 import { QuarterInfo } from '../../utils/quarterUtils';
 import PaymentDialog from '../payment/PaymentDialog';
 import { PaymentProduct, EXPORT_PRODUCTS } from '../../services/MoMoService';
@@ -43,10 +43,10 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
     // Execute the export after payment is confirmed
     if (pendingExportType === 'excel') {
       // Call the actual export function
-      ExcelButton.exportToExcel(transactions, selectedQuarter);
+      handleExportToExcel(transactions, selectedQuarter);
     } else if (pendingExportType === 'pdf') {
       // Call the actual export function
-      PDFButton.exportToPDF(transactions, selectedQuarter);
+      handleExportToPDF(transactions, selectedQuarter);
     }
     
     // Reset state

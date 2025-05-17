@@ -12,13 +12,18 @@ interface PDFButtonProps {
   selectedQuarter?: QuarterInfo | null;
 }
 
+// Create a standalone export function that can be called from anywhere
+export const handleExportToPDF = (transactions: Transaction[], selectedQuarter?: QuarterInfo | null) => {
+  exportToPDF(transactions, selectedQuarter);
+};
+
 const PDFButton: React.FC<PDFButtonProps> = ({ transactions, onClick, selectedQuarter }) => {
   const handleClick = () => {
     if (onClick) {
       onClick();
     } else {
       // Direct export without payment flow (for testing)
-      PDFButton.exportToPDF(transactions, selectedQuarter);
+      handleExportToPDF(transactions, selectedQuarter);
     }
   };
 
@@ -28,11 +33,6 @@ const PDFButton: React.FC<PDFButtonProps> = ({ transactions, onClick, selectedQu
       Export to PDF
     </Button>
   );
-};
-
-// Static method to allow calling from payment handler
-PDFButton.exportToPDF = (transactions: Transaction[], selectedQuarter?: QuarterInfo | null) => {
-  exportToPDF(transactions, selectedQuarter);
 };
 
 export default PDFButton;
