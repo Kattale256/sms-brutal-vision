@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import MessageStats from '../components/MessageStats';
@@ -5,7 +6,7 @@ import MessageTimeline from '../components/MessageTimeline';
 import MessageCategories from '../components/MessageCategories';
 import MessageList from '../components/MessageList';
 import { sampleSmsData, SmsMessage } from '../data/sampleData';
-import { Transaction } from '../services/smsReader';
+import { Transaction } from '../services/sms/types';
 import { Capacitor } from '@capacitor/core';
 import TransactionStats from '../components/transaction-stats';
 import TransactionTimeline from '../components/TransactionTimeline';
