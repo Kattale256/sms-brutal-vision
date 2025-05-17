@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import MessageStats from '../components/MessageStats';
@@ -6,13 +5,14 @@ import MessageTimeline from '../components/MessageTimeline';
 import MessageCategories from '../components/MessageCategories';
 import MessageList from '../components/MessageList';
 import { sampleSmsData, SmsMessage } from '../data/sampleData';
-import { Transaction } from '../services/SmsReader';
+import { Transaction } from '../services/smsReader';
 import { Capacitor } from '@capacitor/core';
 import TransactionStats from '../components/transaction-stats';
 import TransactionTimeline from '../components/TransactionTimeline';
 import TransactionCalendar from '../components/TransactionCalendar';
 import TransactionContacts from '../components/TransactionContacts';
 import TransactionList from '../components/TransactionList';
+import TransactionChat from '../components/TransactionChat';
 
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
@@ -24,7 +24,8 @@ const Index = () => {
     'transaction-timeline',
     'transaction-calendar',
     'top-contacts',
-    'transaction-list'
+    'transaction-list',
+    'transaction-chat'
   ]);
   
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -54,6 +55,15 @@ const Index = () => {
     setScrollBottomCount(0);
   };
 
+  useEffect(() => {
+    setSectionOrder(prevOrder => {
+      if (!prevOrder.includes('transaction-chat')) {
+        return [...prevOrder, 'transaction-chat'];
+      }
+      return prevOrder;
+    });
+  }, []);
+
   const renderTransactionSections = () => {
     // Object with all the sections
     const sections: Record<string, JSX.Element> = {
@@ -61,7 +71,8 @@ const Index = () => {
       'transaction-timeline': <TransactionTimeline transactions={transactions} />,
       'transaction-calendar': <TransactionCalendar transactions={transactions} />,
       'top-contacts': <TransactionContacts transactions={transactions} />,
-      'transaction-list': <TransactionList transactions={transactions} />
+      'transaction-list': <TransactionList transactions={transactions} />,
+      'transaction-chat': <TransactionChat transactions={transactions} />
     };
 
     // Return sections in the order from sectionOrder state

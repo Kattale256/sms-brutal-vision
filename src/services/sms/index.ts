@@ -1,13 +1,13 @@
 
 import SmsReader from './SmsReader';
-import TransactionParser from './TransactionParser';
 import SampleDataProvider from './SampleDataProvider';
-import { SmsMessage, Transaction } from './types';
+import TransactionParser from './TransactionParser';
 
-export {
-  SmsReader,
-  TransactionParser,
-  SampleDataProvider,
-  SmsMessage,
-  Transaction
+// Re-export for backward compatibility
+export { 
+  SmsReader, 
+  SampleDataProvider, 
+  TransactionParser 
 };
+
+export type { SmsMessage, Transaction } from './types';
