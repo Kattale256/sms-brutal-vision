@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '../../ui/button';
 import { FileDown } from 'lucide-react';
-import { Transaction } from '../../../services/SmsReader';
+import { Transaction } from '../../../services/sms/types';
 import { exportToPDF } from '../export-utils';
 import { QuarterInfo } from '../../../utils/quarterUtils';
 

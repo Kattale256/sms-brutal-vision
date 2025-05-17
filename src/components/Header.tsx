@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import SmsReader from '../services/SmsReader';
-import { Transaction } from '../services/SmsReader';
+import SmsReader from '../services/sms/SmsReader';
+import { Transaction } from '../services/sms/types';
 import { Clipboard, Smartphone } from 'lucide-react';
 
 const Header: React.FC<{
