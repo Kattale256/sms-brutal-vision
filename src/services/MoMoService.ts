@@ -5,6 +5,8 @@ export interface MoMoConfig {
   apiKey: string;
   userId: string;
   baseUrl: string;
+  merchantCode: string;
+  notificationEmail: string;
 }
 
 export interface PaymentProduct {
@@ -19,37 +21,37 @@ export const EXPORT_PRODUCTS: Record<string, PaymentProduct> = {
   'excel-current-quarter': {
     id: 'excel-current-quarter',
     name: 'Excel Report (Current Quarter)',
-    price: 1500,
+    price: 300, // Updated price to 300 UGX
     description: 'Export transaction data to Excel for the current quarter'
   },
   'excel-full-year': {
     id: 'excel-full-year',
     name: 'Excel Report (Full Year)',
-    price: 4500,
+    price: 1200, // 4x the quarter price
     description: 'Export transaction data to Excel for the full financial year'
   },
   'pdf-current-quarter': {
     id: 'pdf-current-quarter',
     name: 'PDF Report (Current Quarter)',
-    price: 2000,
+    price: 100, // Updated price to 100 UGX
     description: 'Export transaction visualizations to PDF for the current quarter'
   },
   'pdf-full-year': {
     id: 'pdf-full-year',
     name: 'PDF Report (Full Year)',
-    price: 6000,
+    price: 400, // 4x the quarter price
     description: 'Export transaction visualizations to PDF for the full financial year'
   },
   'cashflow-current-quarter': {
     id: 'cashflow-current-quarter',
     name: 'Cash Flow Statement (Current Quarter)',
-    price: 2500,
+    price: 100, // Aligned with PDF pricing
     description: 'Export cash flow statement to PDF for the current quarter'
   },
   'cashflow-full-year': {
     id: 'cashflow-full-year',
     name: 'Cash Flow Statement (Full Year)',
-    price: 7500,
+    price: 400, // 4x the quarter price
     description: 'Export cash flow statement to PDF for the full financial year'
   }
 };
@@ -87,7 +89,10 @@ export class MoMoService {
       }
       
       // Mock API call to request payment
-      console.log(`Requesting payment of ${product.price} UGX from ${phoneNumber} for ${product.name}`);
+      console.log(`Requesting payment of ${product.price} UGX from ${phoneNumber} for ${product.name} using merchant code ${this.config.merchantCode}`);
+      
+      // Send notification email about the payment request
+      console.log(`Payment notification sent to: ${this.config.notificationEmail}`);
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -116,6 +121,9 @@ export class MoMoService {
       const outcomes: Array<'PENDING' | 'SUCCESSFUL' | 'FAILED'> = ['SUCCESSFUL', 'SUCCESSFUL', 'SUCCESSFUL', 'PENDING', 'FAILED'];
       const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
       
+      // Send notification email about the payment status
+      console.log(`Payment status (${randomOutcome}) notification sent to: ${this.config.notificationEmail}`);
+      
       return randomOutcome;
     } catch (error) {
       console.error('Payment status check error:', error);
@@ -124,11 +132,13 @@ export class MoMoService {
   }
 }
 
-// Create a singleton instance with default config
+// Create a singleton instance with updated config
 export const momoService = new MoMoService({
   apiKey: 'demo-api-key',
   userId: 'demo-user-id',
-  baseUrl: 'https://api.mtn.com/collection/v1'
+  baseUrl: 'https://api.mtn.com/collection/v1',
+  merchantCode: '617596', // Added merchant code as requested
+  notificationEmail: 'itmusumba@gmail.com' // Added notification email as requested
 });
 
 // Helper to generate a unique reference ID

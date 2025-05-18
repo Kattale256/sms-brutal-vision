@@ -1,9 +1,13 @@
 
 import React, { useState } from 'react';
 import { Transaction } from '../../services/SmsReader';
-import { ExcelButton, PDFButton, handleExportToExcel, handleExportToPDF } from './buttons';
+import { ExcelButton, PDFButton } from './buttons';
+import { handleExportToExcel, handleExportToPDF } from './buttons';
+import { exportFreeToExcel } from './export-utils/exportFreeToExcel';
+import { exportFreeToPDF } from './export-utils/exportFreeToPDF';
 import { QuarterInfo } from '../../utils/quarterUtils';
 import PaymentDialog from '../payment/PaymentDialog';
+import ExportOptions from './buttons/ExportOptions';
 import { PaymentProduct, EXPORT_PRODUCTS } from '../../services/MoMoService';
 
 interface ExportButtonsProps {
@@ -15,42 +19,30 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PaymentProduct | null>(null);
   const [pendingExportType, setPendingExportType] = useState<'excel' | 'pdf' | null>(null);
-  
-  // Determine which product ID to use based on export type and quarter selection
-  const getProductId = (exportType: 'excel' | 'pdf') => {
-    if (selectedQuarter) {
-      // Check if current quarter
-      const isCurrentQuarter = true; // In a real app, compare with current date
-      return `${exportType}-${isCurrentQuarter ? 'current-quarter' : 'full-year'}`;
-    } else {
-      // Full year product
-      return `${exportType}-full-year`;
-    }
-  };
+  const [optionsDialogOpen, setOptionsDialogOpen] = useState(false);
   
   const handleExportClick = (exportType: 'excel' | 'pdf') => {
-    const productId = getProductId(exportType);
-    const product = EXPORT_PRODUCTS[productId];
-    
-    if (product) {
-      setSelectedProduct(product);
-      setPendingExportType(exportType);
-      setPaymentDialogOpen(true);
-    }
+    setPendingExportType(exportType);
+    setOptionsDialogOpen(true);
   };
   
-  const handlePaymentComplete = () => {
-    // Execute the export after payment is confirmed
+  const handleFreePdfExport = () => {
+    exportFreeToPDF(transactions, selectedQuarter);
+    setOptionsDialogOpen(false);
+  };
+  
+  const handleFreeExcelExport = () => {
+    exportFreeToExcel(transactions, selectedQuarter);
+    setOptionsDialogOpen(false);
+  };
+  
+  const handlePremiumExport = () => {
     if (pendingExportType === 'excel') {
-      // Call the actual export function
       handleExportToExcel(transactions, selectedQuarter);
     } else if (pendingExportType === 'pdf') {
-      // Call the actual export function
       handleExportToPDF(transactions, selectedQuarter);
     }
-    
-    // Reset state
-    setPendingExportType(null);
+    setOptionsDialogOpen(false);
   };
   
   return (
@@ -66,14 +58,15 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
         selectedQuarter={selectedQuarter}
       />
       
-      {paymentDialogOpen && selectedProduct && (
-        <PaymentDialog
-          isOpen={paymentDialogOpen}
-          onClose={() => setPaymentDialogOpen(false)}
-          onPaymentComplete={handlePaymentComplete}
-          product={selectedProduct}
-        />
-      )}
+      <ExportOptions 
+        isOpen={optionsDialogOpen}
+        onClose={() => setOptionsDialogOpen(false)}
+        exportType={pendingExportType || 'pdf'}
+        transactions={transactions}
+        selectedQuarter={selectedQuarter}
+        onFreeExport={pendingExportType === 'excel' ? handleFreeExcelExport : handleFreePdfExport}
+        onPremiumExport={handlePremiumExport}
+      />
     </div>
   );
 };

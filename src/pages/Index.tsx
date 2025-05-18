@@ -14,6 +14,8 @@ import TransactionCalendar from '../components/TransactionCalendar';
 import TransactionContacts from '../components/TransactionContacts';
 import TransactionList from '../components/TransactionList';
 import TransactionChat from '../components/TransactionChat';
+import FileVerifier from '../components/security/FileVerifier';
+import HowToUseVideo from '../components/HowToUseVideo';
 
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
@@ -93,6 +95,12 @@ const Index = () => {
           onSmsImport={handleSmsImport}
           onTransactionsImport={handleTransactionsImport}
         />
+
+        {/* New features - How to Use Video and File Verifier */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <HowToUseVideo />
+          <FileVerifier />
+        </div>
 
         {transactions.length > 0 && (
           <div className="flex justify-center mb-6">

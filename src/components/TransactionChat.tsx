@@ -4,7 +4,7 @@ import { Transaction } from '../services/sms/types';
 import { analyzeTransactionQuery, generateMessageId } from '../utils/transactionChat';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { SendIcon, MessageCircle, Trash, Calendar, Download, TrendingUp, FileChartLine, InfoCircle, FileChartPie, HelpCircle } from 'lucide-react';
+import { SendIcon, MessageCircle, Trash, Calendar, Download, TrendingUp, FileChartLine, FileChartPie, HelpCircle } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Handle } from './ui/dnd-handle';
