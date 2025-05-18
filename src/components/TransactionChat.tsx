@@ -2,22 +2,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Transaction } from '../services/sms/types';
 import { analyzeTransactionQuery, generateMessageId } from '../utils/transactionChat';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { SendIcon, MessageCircle, Trash, Calendar, Download, TrendingUp, FileChartLine, FileChartPie, HelpCircle } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Handle } from './ui/dnd-handle';
 import { toast } from './ui/use-toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
-import { Card } from './ui/card';
 
-interface ChatMessage {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: Date;
-}
+// Import refactored components
+import ChatMessage, { ChatMessageType } from './chat/ChatMessage';
+import ChatFAQTabs from './chat/ChatFAQTabs';
+import ChatInput from './chat/ChatInput';
+import ChatHeader from './chat/ChatHeader';
 
 interface TransactionChatProps {
   transactions: Transaction[];
@@ -25,55 +19,8 @@ interface TransactionChatProps {
 
 const STORAGE_KEY = 'transaction-chat-history';
 
-const FAQs = [
-  {
-    category: 'summary',
-    icon: <FileChartPie className="h-4 w-4" />,
-    label: 'Summary',
-    questions: [
-      "What's my total transaction amount?",
-      "Give me a breakdown by transaction type",
-      "How many transactions do I have?",
-      "What's my average transaction amount?"
-    ]
-  },
-  {
-    category: 'fees',
-    icon: <FileChartLine className="h-4 w-4" />,
-    label: 'Fees & Taxes',
-    questions: [
-      "How much have I spent on fees?",
-      "What's my total tax paid?",
-      "Show me fees over time",
-      "What percentage of my transactions are fees?"
-    ]
-  },
-  {
-    category: 'patterns',
-    icon: <TrendingUp className="h-4 w-4" />,
-    label: 'Patterns',
-    questions: [
-      "What are my spending patterns?",
-      "Who do I transact with most often?",
-      "What days do I spend the most?",
-      "Compare this month to last month"
-    ]
-  },
-  {
-    category: 'dates',
-    icon: <Calendar className="h-4 w-4" />,
-    label: 'Time-Based',
-    questions: [
-      "Show transactions from last week",
-      "What was my largest transaction this month?",
-      "How has my spending changed over time?",
-      "What day of the week do I spend most?"
-    ]
-  }
-];
-
 const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -137,7 +84,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
     if (!input.trim()) return;
     
     // Add user message
-    const userMessage: ChatMessage = {
+    const userMessage: ChatMessageType = {
       id: generateMessageId(),
       content: input,
       role: 'user',
@@ -154,7 +101,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       
       // Add assistant response
       setTimeout(() => {
-        const assistantMessage: ChatMessage = {
+        const assistantMessage: ChatMessageType = {
           id: generateMessageId(),
           content: response,
           role: 'assistant',
@@ -168,7 +115,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       console.error('Error processing question:', error);
       
       // Handle error
-      const errorMessage: ChatMessage = {
+      const errorMessage: ChatMessageType = {
         id: generateMessageId(),
         content: "Sorry, I encountered an error analyzing your transactions. Please try again.",
         role: 'assistant',
@@ -215,7 +162,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
     try {
       // Format chat history
       const chatContent = messages
-        .map(msg => `[${msg.timestamp.toLocaleString()}] ${msg.role.toUpperCase()}: ${msg.content}`)
+        .map(msg => `[${msg.timestamp instanceof Date ? msg.timestamp.toLocaleString() : new Date(msg.timestamp).toLocaleString()}] ${msg.role.toUpperCase()}: ${msg.content}`)
         .join('\n\n');
       
       // Create blob and download link
@@ -247,57 +194,12 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       <div className="absolute top-2 right-2 cursor-move" {...attributes} {...listeners}>
         <Handle />
       </div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <MessageCircle className="h-6 w-6" />
-          TRANSACTION ASSISTANT
-        </h2>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={exportChatHistory} 
-            title="Export chat"
-            className="h-8 w-8"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={clearChat} 
-            title="Clear chat"
-            className="h-8 w-8"
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      
+      <ChatHeader onExport={exportChatHistory} onClear={clearChat} />
       
       <div className="flex-1 overflow-y-auto mb-4 border-2 border-neo-black p-4 bg-white">
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`mb-4 ${
-              msg.role === 'user' ? 'ml-auto mr-2 text-right' : 'ml-2 mr-auto'
-            }`}
-          >
-            <div
-              className={`inline-block p-3 rounded-lg max-w-[80%] ${
-                msg.role === 'user'
-                  ? 'bg-neo-yellow border-2 border-neo-black transform transition-all hover:scale-[1.01]'
-                  : 'bg-gray-100 border-2 border-neo-black transform transition-all hover:scale-[1.01]'
-              }`}
-            >
-              <p className="whitespace-pre-line">{msg.content}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {msg.timestamp.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-            </div>
-          </div>
+          <ChatMessage key={msg.id} message={msg} />
         ))}
         {isProcessing && (
           <div className="ml-2 mr-auto mb-4">
@@ -314,63 +216,15 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       </div>
 
       <div className="mb-4">
-        <Tabs defaultValue="summary" className="w-full border-2 border-neo-black p-2 bg-white">
-          <TabsList className="grid grid-cols-4 gap-2 bg-gray-100 p-1">
-            {FAQs.map((faq) => (
-              <TabsTrigger
-                key={faq.category}
-                value={faq.category}
-                className="flex items-center gap-1 data-[state=active]:bg-neo-yellow data-[state=active]:border-neo-black data-[state=active]:border-2"
-              >
-                {faq.icon}
-                <span className="hidden sm:inline">{faq.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {FAQs.map((faq) => (
-            <TabsContent key={faq.category} value={faq.category} className="mt-2 space-y-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {faq.questions.map((question, idx) => (
-                  <Card 
-                    key={idx}
-                    className="p-3 cursor-pointer border-2 hover:bg-gray-50 transform transition-all hover:scale-[1.02] border-neo-black"
-                    onClick={() => handleFAQClick(question)}
-                  >
-                    <div className="flex items-center gap-1">
-                      <HelpCircle className="h-4 w-4 text-neo-gray" />
-                      <p className="text-sm font-medium">{question}</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+        <ChatFAQTabs onQuestionClick={handleFAQClick} />
       </div>
       
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask questions about your transactions..."
-          className="flex-1 resize-none border-2 border-neo-black h-20"
-          disabled={isProcessing}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit(e);
-            }
-          }}
-        />
-        <Button 
-          type="submit" 
-          disabled={isProcessing} 
-          className="bg-neo-yellow hover:bg-yellow-400 text-neo-black border-2 border-neo-black h-20"
-        >
-          <SendIcon className="h-5 w-5" />
-        </Button>
-      </form>
+      <ChatInput 
+        input={input}
+        setInput={setInput}
+        handleSubmit={handleSubmit}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 };

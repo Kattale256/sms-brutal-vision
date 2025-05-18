@@ -10,139 +10,15 @@ import {
   getTransactionsByDate,
   getFeesByDate
 } from './transactionAnalyzer';
+import { generateMessageId } from './chat/chatTypes';
+import { 
+  getSpendingPatternsByDay, 
+  compareMonthToMonth, 
+  getFeesPercentage 
+} from './chat/patternAnalysis';
+import { getTransactionsFromTimePeriod } from './chat/timeFilters';
 
-interface ChatMessage {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: Date;
-}
-
-// Helper to get spending patterns by day of week
-const getSpendingPatternsByDay = (transactions: Transaction[]): Record<string, number> => {
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const spendingByDay: Record<string, number> = {};
-  
-  dayNames.forEach(day => {
-    spendingByDay[day] = 0;
-  });
-  
-  transactions.forEach(transaction => {
-    if (transaction.type === 'send' || transaction.type === 'payment') {
-      const date = new Date(transaction.timestamp);
-      const dayName = dayNames[date.getDay()];
-      spendingByDay[dayName] = (spendingByDay[dayName] || 0) + transaction.amount;
-    }
-  });
-  
-  return spendingByDay;
-};
-
-// Helper to compare month to month spending
-const compareMonthToMonth = (transactions: Transaction[]): string => {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-  const currentYear = now.getFullYear();
-  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-  
-  const currentMonthTransactions = transactions.filter(t => {
-    const date = new Date(t.timestamp);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-  
-  const lastMonthTransactions = transactions.filter(t => {
-    const date = new Date(t.timestamp);
-    return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
-  });
-  
-  const currentMonthSpending = currentMonthTransactions
-    .filter(t => t.type === 'send' || t.type === 'payment')
-    .reduce((sum, t) => sum + t.amount, 0);
-    
-  const lastMonthSpending = lastMonthTransactions
-    .filter(t => t.type === 'send' || t.type === 'payment')
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const difference = currentMonthSpending - lastMonthSpending;
-  const percentChange = lastMonthSpending === 0 ? 100 : (difference / lastMonthSpending) * 100;
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'];
-  
-  if (currentMonthTransactions.length === 0 && lastMonthTransactions.length === 0) {
-    return "I don't have data for either this month or last month to make a comparison.";
-  }
-  
-  const currency = transactions[0]?.currency || 'UGX';
-  
-  return `Comparing ${monthNames[currentMonth]} to ${monthNames[lastMonth]}:
-  
-  ${monthNames[currentMonth]} spending: ${currentMonthSpending.toLocaleString()} ${currency} (${currentMonthTransactions.length} transactions)
-  ${monthNames[lastMonth]} spending: ${lastMonthSpending.toLocaleString()} ${currency} (${lastMonthTransactions.length} transactions)
-  
-  ${difference > 0 
-    ? `You've spent ${Math.abs(difference).toLocaleString()} ${currency} more this month (${percentChange.toFixed(1)}% increase).` 
-    : `You've spent ${Math.abs(difference).toLocaleString()} ${currency} less this month (${Math.abs(percentChange).toFixed(1)}% decrease).`}`;
-};
-
-// Helper to get transactions from a specific time period
-const getTransactionsFromTimePeriod = (
-  transactions: Transaction[],
-  period: 'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'last_month'
-): Transaction[] => {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let startDate: Date;
-  let endDate: Date;
-  
-  switch (period) {
-    case 'today':
-      startDate = today;
-      endDate = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-      break;
-    case 'yesterday':
-      startDate = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      endDate = today;
-      break;
-    case 'this_week': 
-      startDate = new Date(today.getTime() - (today.getDay() * 24 * 60 * 60 * 1000));
-      endDate = now;
-      break;
-    case 'last_week':
-      startDate = new Date(today.getTime() - ((today.getDay() + 7) * 24 * 60 * 60 * 1000));
-      endDate = new Date(today.getTime() - (today.getDay() * 24 * 60 * 60 * 1000));
-      break;
-    case 'this_month':
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = now;
-      break;
-    case 'last_month':
-      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      endDate = new Date(now.getFullYear(), now.getMonth(), 0);
-      break;
-    default:
-      startDate = new Date(0);
-      endDate = now;
-  }
-  
-  return transactions.filter(transaction => {
-    const transactionDate = new Date(transaction.timestamp);
-    return transactionDate >= startDate && transactionDate <= endDate;
-  });
-};
-
-// Calculate fees as percentage of total transaction amounts
-const getFeesPercentage = (transactions: Transaction[]): string => {
-  const totalTransactionAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
-  const totalFees = getTotalFees(transactions);
-  
-  if (totalTransactionAmount === 0) {
-    return "0%";
-  }
-  
-  const percentage = (totalFees / totalTransactionAmount) * 100;
-  return `${percentage.toFixed(2)}%`;
-};
+export { generateMessageId };
 
 export const analyzeTransactionQuery = (
   query: string, 
@@ -184,7 +60,7 @@ export const analyzeTransactionQuery = (
     const currency = transactions[0]?.currency || 'UGX';
     
     if (lowerQuery.includes('percentage') || lowerQuery.includes('percent')) {
-      const percentage = getFeesPercentage(transactions);
+      const percentage = getFeesPercentage(transactions, totalFees);
       return `Fees make up ${percentage} of your total transaction amounts. You've paid a total of ${totalFees.toLocaleString()} ${currency} in transaction fees.`;
     } else if (lowerQuery.includes('over time') || lowerQuery.includes('by date')) {
       const feesByDate = getFeesByDate(transactions);
@@ -264,8 +140,6 @@ export const analyzeTransactionQuery = (
       - Withdrawals: ${typeCount.withdrawal || 0}
       - Deposits: ${typeCount.deposit || 0}`;
   }
-  
-  // NEW ANALYSIS CAPABILITIES
   
   // Spending patterns by day of week
   if (lowerQuery.includes('pattern') || 
@@ -398,9 +272,4 @@ export const analyzeTransactionQuery = (
   
   // Handle unknown queries
   return "I'm not sure how to answer that question about your transactions. Try asking about total amounts, fees, transaction types, spending patterns, or time-based analyses.";
-};
-
-// Helper to generate a unique ID for chat messages
-export const generateMessageId = (): string => {
-  return Math.random().toString(36).substring(2, 11);
 };

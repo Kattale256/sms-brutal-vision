@@ -21,14 +21,24 @@ const HowToUseVideo: React.FC = () => {
       icon: <div className="text-4xl">📱</div>,
     },
     {
-      title: 'Step 2: Paste the SMS messages',
-      description: 'Tap the "Paste SMS" button and paste your copied messages into the input box',
+      title: 'Step 2: Tap "Paste SMS" button',
+      description: 'Tap the "Paste SMS" button at the top of the app to open the input dialog',
+      icon: <div className="text-4xl">👆</div>,
+    },
+    {
+      title: 'Step 3: Paste messages in dialog',
+      description: 'Paste your copied messages into the dialog box that appears',
       icon: <div className="text-4xl">📋</div>,
     },
     {
-      title: 'Step 3: Process and analyze',
+      title: 'Step 4: Tap "Process" button',
       description: 'Tap "Process" to transform your SMS messages into detailed financial insights',
       icon: <div className="text-4xl">✨</div>,
+    },
+    {
+      title: 'Step 5: Download your reports',
+      description: 'Export your analysis as PDF or Excel files for your records',
+      icon: <div className="text-4xl">📊</div>,
     }
   ];
   
