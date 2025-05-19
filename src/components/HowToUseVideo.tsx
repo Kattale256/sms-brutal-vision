@@ -2,6 +2,13 @@
 import React, { useRef, useState } from 'react';
 import { Card } from './ui/card';
 import { Play, Pause, RefreshCw } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext
+} from './ui/carousel';
 
 interface Step {
   title: string;
@@ -88,26 +95,33 @@ const HowToUseVideo: React.FC = () => {
         </div>
       </div>
       
-      <div className="relative h-60 overflow-hidden border-2 border-neo-black rounded">
-        <div 
-          className="flex transition-transform duration-500 ease-in-out h-full"
-          style={{ transform: `translateX(-${currentStep * 100}%)`, width: `${steps.length * 100}%` }}
-        >
+      <Carousel 
+        className="w-full"
+        opts={{
+          loop: true,
+          align: "start",
+        }}
+        onMouseEnter={() => setIsPlaying(false)}
+        onMouseLeave={() => setIsPlaying(true)}
+      >
+        <CarouselContent>
           {steps.map((step, index) => (
-            <div 
-              key={index} 
-              className="flex flex-col items-center justify-center gap-4 w-full h-full bg-gray-50 p-4"
-              style={{ width: `${100 / steps.length}%` }}
-            >
-              {step.icon}
-              <h4 className="font-bold text-center">{step.title}</h4>
-              <p className="text-center text-sm text-gray-600">{step.description}</p>
-            </div>
+            <CarouselItem key={index} className="basis-full">
+              <div 
+                className="flex flex-col items-center justify-center gap-4 h-60 bg-gray-50 p-4 border-2 border-neo-black rounded"
+              >
+                {step.icon}
+                <h4 className="font-bold text-center">{step.title}</h4>
+                <p className="text-center text-sm text-gray-600">{step.description}</p>
+              </div>
+            </CarouselItem>
           ))}
-        </div>
+        </CarouselContent>
+        <CarouselPrevious className="left-2" />
+        <CarouselNext className="right-2" />
         
         {/* Step indicators */}
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+        <div className="flex justify-center gap-2 mt-4">
           {steps.map((_, index) => (
             <button
               key={index}
@@ -119,7 +133,7 @@ const HowToUseVideo: React.FC = () => {
             />
           ))}
         </div>
-      </div>
+      </Carousel>
     </Card>
   );
 };

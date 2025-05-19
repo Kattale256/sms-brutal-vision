@@ -9,6 +9,27 @@ export const categorizeMessage = (message: SmsMessage): string => {
     return message.category;
   }
   
+  // Transaction type categorization
+  if (content.includes("you have received") || content.includes("received")) {
+    return "receive";
+  }
+  if (content.includes("you have sent") || content.includes("sent")) {
+    return "send";
+  }
+  if (content.includes("you have paid") || content.includes("paid")) {
+    return "payment";
+  }
+  if (content.includes("you have withdrawn") || content.includes("withdrawn")) {
+    return "withdrawal";
+  }
+  if (content.includes("you have deposited") || content.includes("deposit") || content.includes("cash deposit")) {
+    return "deposit";
+  }
+  if (content.includes("you have bought") || content.includes("bought") || content.includes("purchase")) {
+    return "purchase";
+  }
+  
+  // Standard categories
   if (content.includes("order") || content.includes("delivered") || content.includes("shipped")) {
     return "shopping";
   }

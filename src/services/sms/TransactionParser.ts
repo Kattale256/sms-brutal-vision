@@ -6,7 +6,7 @@ export class TransactionParser {
    * Parses raw SMS text into transaction objects
    */
   public parseTransactionsFromText(text: string): Transaction[] {
-    const messages = text.split(/(?=SENT|RECEIVED|PAID|WITHDRAWN|You have sent|You have received)/i)
+    const messages = text.split(/(?=SENT|RECEIVED|PAID|WITHDRAWN|DEPOSITED|You have sent|You have received|You have paid|You have withdrawn|You have deposited)/i)
       .filter(msg => msg.trim().length > 0);
     
     console.log(`Parsing ${messages.length} messages`);
@@ -32,16 +32,16 @@ export class TransactionParser {
     
     let type: Transaction['type'] = 'send';
     
-    // Determine transaction type
-    if (lowerMessage.includes('received')) {
+    // Determine transaction type with expanded patterns
+    if (lowerMessage.includes('received') || lowerMessage.includes('you have received')) {
       type = 'receive';
-    } else if (lowerMessage.includes('sent')) {
+    } else if (lowerMessage.includes('sent') || lowerMessage.includes('you have sent')) {
       type = 'send';
-    } else if (lowerMessage.includes('paid')) {
+    } else if (lowerMessage.includes('paid') || lowerMessage.includes('you have paid')) {
       type = 'payment';
-    } else if (lowerMessage.includes('withdrawn')) {
+    } else if (lowerMessage.includes('withdrawn') || lowerMessage.includes('you have withdrawn')) {
       type = 'withdrawal';
-    } else if (lowerMessage.includes('cash deposit')) {
+    } else if (lowerMessage.includes('deposited') || lowerMessage.includes('deposit') || lowerMessage.includes('you have deposited') || lowerMessage.includes('cash deposit')) {
       type = 'deposit';
     }
     
@@ -55,8 +55,8 @@ export class TransactionParser {
       return null;
     }
     
-    // Extract amount
-    const amountRegex = /UGX\s*([0-9,.]+)/i;
+    // Extract amount with expanded currency support
+    const amountRegex = /(?:UGX|Shs|KES|TZS)\s*([0-9,.]+)/i;
     const amountMatch = message.match(amountRegex);
     
     if (!amountMatch) {
@@ -66,7 +66,14 @@ export class TransactionParser {
     
     const amountStr = amountMatch[1].replace(/,/g, '');
     const amount = parseFloat(amountStr);
-    const currency = 'UGX';
+    
+    // Determine currency
+    let currency = 'UGX';
+    if (message.includes('KES')) {
+      currency = 'KES';
+    } else if (message.includes('TZS')) {
+      currency = 'TZS';
+    }
     
     let sender: string | undefined;
     let recipient: string | undefined;
@@ -97,7 +104,7 @@ export class TransactionParser {
       const phoneMatch = message.match(phoneRegex);
       phoneNumber = phoneMatch ? phoneMatch[1] : undefined;
       
-      const feeRegex = /Fee\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const feeRegex = /Fee\s+(?:UGX|Shs)\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const feeMatch = message.match(feeRegex);
       fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
       
@@ -116,11 +123,11 @@ export class TransactionParser {
       const agentMatch = message.match(agentRegex);
       agentId = agentMatch ? agentMatch[1] : undefined;
       
-      const feeRegex = /Fee\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const feeRegex = /Fee\s+(?:UGX|Shs)\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const feeMatch = message.match(feeRegex);
       fee = feeMatch ? parseFloat(feeMatch[1].replace(/,/g, '')) : undefined;
       
-      const taxRegex = /Tax\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const taxRegex = /Tax\s+(?:UGX|Shs)\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const taxMatch = message.match(taxRegex);
       tax = taxMatch ? parseFloat(taxMatch[1].replace(/,/g, '')) : undefined;
       
@@ -139,7 +146,7 @@ export class TransactionParser {
       const businessMatch = message.match(businessRegex);
       recipient = businessMatch ? businessMatch[1].trim() : undefined;
       
-      const chargeRegex = /Charge\s+UGX\s*([0-9,]+(?:\.[0-9]+)?)/i;
+      const chargeRegex = /Charge\s+(?:UGX|Shs)\s*([0-9,]+(?:\.[0-9]+)?)/i;
       const chargeMatch = message.match(chargeRegex);
       fee = chargeMatch ? parseFloat(chargeMatch[1].replace(/,/g, '')) : undefined;
       
