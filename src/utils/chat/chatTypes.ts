@@ -1,9 +1,6 @@
 
 import React from 'react';
 
-// This file is maintained for backwards compatibility
-// New code should use features/chat/types.ts instead
-
 export interface ChatMessage {
   id: string;
   content: string;
