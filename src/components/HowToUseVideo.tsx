@@ -103,6 +103,10 @@ const HowToUseVideo: React.FC = () => {
         }}
         onMouseEnter={() => setIsPlaying(false)}
         onMouseLeave={() => setIsPlaying(true)}
+        value={{
+          index: currentStep,
+        }}
+        onValueChange={({ index }) => setCurrentStep(index)}
       >
         <CarouselContent>
           {steps.map((step, index) => (
@@ -117,8 +121,8 @@ const HowToUseVideo: React.FC = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2" />
-        <CarouselNext className="right-2" />
+        <CarouselPrevious className="left-2" onClick={() => setCurrentStep(prev => (prev - 1 + steps.length) % steps.length)} />
+        <CarouselNext className="right-2" onClick={() => setCurrentStep(prev => (prev + 1) % steps.length)} />
         
         {/* Step indicators */}
         <div className="flex justify-center gap-2 mt-4">
