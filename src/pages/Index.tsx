@@ -16,6 +16,10 @@ import TransactionList from '../components/TransactionList';
 import TransactionChat from '../components/TransactionChat';
 import FileVerifier from '../components/security/FileVerifier';
 import HowToUseVideo from '../components/HowToUseVideo';
+import UserMenu from '../components/UserMenu';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
@@ -32,6 +36,8 @@ const Index = () => {
   ]);
   
   const resultsRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,6 +52,70 @@ const Index = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Load user's saved transactions on component mount
+  useEffect(() => {
+    if (user) {
+      loadUserTransactions();
+    }
+  }, [user]);
+
+  const loadUserTransactions = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_transactions')
+        .select('transaction_data')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error loading transactions:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const savedTransactions = data[0].transaction_data as Transaction[];
+        setTransactions(savedTransactions);
+        setActiveView('transactions');
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+    }
+  };
+
+  const saveUserTransactions = async (transactionsToSave: Transaction[]) => {
+    if (!user || transactionsToSave.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_transactions')
+        .upsert({
+          user_id: user.id,
+          transaction_data: transactionsToSave,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        console.error('Error saving transactions:', error);
+        toast({
+          title: "Save Failed",
+          description: "Failed to save your transactions. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Transactions Saved",
+          description: "Your transaction data has been securely saved.",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving transactions:', error);
+    }
+  };
+
   const handleSmsImport = (importedMessages: SmsMessage[]) => {
     setMessages(importedMessages);
     setActiveView('sms');
@@ -56,6 +126,9 @@ const Index = () => {
     setTransactions(importedTransactions);
     setActiveView('transactions');
     setScrollBottomCount(0);
+    
+    // Auto-save transactions for authenticated users
+    saveUserTransactions(importedTransactions);
   };
 
   useEffect(() => {
@@ -78,7 +151,6 @@ const Index = () => {
       'transaction-chat': <TransactionChat transactions={transactions} />
     };
 
-    // Return sections in the order from sectionOrder state
     return sectionOrder
       .filter(id => sections[id])
       .map(id => (
@@ -91,10 +163,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#F9F9F9] p-4">
       <div className="max-w-7xl mx-auto">
-        <Header
-          onSmsImport={handleSmsImport}
-          onTransactionsImport={handleTransactionsImport}
-        />
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex-1">
+            <Header
+              onSmsImport={handleSmsImport}
+              onTransactionsImport={handleTransactionsImport}
+            />
+          </div>
+          <UserMenu />
+        </div>
 
         {/* New features - How to Use Video and File Verifier */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
