@@ -76,7 +76,8 @@ const Index = () => {
       }
 
       if (data && data.length > 0) {
-        const savedTransactions = data[0].transaction_data as Transaction[];
+        // Properly cast the Json data to Transaction array
+        const savedTransactions = data[0].transaction_data as unknown as Transaction[];
         setTransactions(savedTransactions);
         setActiveView('transactions');
       }
@@ -93,7 +94,7 @@ const Index = () => {
         .from('user_transactions')
         .upsert({
           user_id: user.id,
-          transaction_data: transactionsToSave,
+          transaction_data: transactionsToSave as any, // Cast to any to satisfy Json type
         }, {
           onConflict: 'user_id'
         });
