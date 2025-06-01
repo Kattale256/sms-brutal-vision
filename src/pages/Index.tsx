@@ -18,8 +18,8 @@ import FileVerifier from '../components/security/FileVerifier';
 import HowToUseVideo from '../components/HowToUseVideo';
 import UserMenu from '../components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { loadUserTransactions, saveUserTransactions } from '@/utils/transactionStorage';
 
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
@@ -55,65 +55,36 @@ const Index = () => {
   // Load user's saved transactions on component mount
   useEffect(() => {
     if (user) {
-      loadUserTransactions();
+      loadSavedTransactions();
     }
   }, [user]);
 
-  const loadUserTransactions = async () => {
+  const loadSavedTransactions = async () => {
     if (!user) return;
 
-    try {
-      const { data, error } = await supabase
-        .from('user_transactions')
-        .select('transaction_data')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error('Error loading transactions:', error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        // Properly cast the Json data to Transaction array
-        const savedTransactions = data[0].transaction_data as unknown as Transaction[];
-        setTransactions(savedTransactions);
-        setActiveView('transactions');
-      }
-    } catch (error) {
-      console.error('Error loading transactions:', error);
+    const savedTransactions = await loadUserTransactions(user);
+    if (savedTransactions.length > 0) {
+      setTransactions(savedTransactions);
+      setActiveView('transactions');
     }
   };
 
-  const saveUserTransactions = async (transactionsToSave: Transaction[]) => {
+  const handleSaveTransactions = async (transactionsToSave: Transaction[]) => {
     if (!user || transactionsToSave.length === 0) return;
 
-    try {
-      const { error } = await supabase
-        .from('user_transactions')
-        .upsert({
-          user_id: user.id,
-          transaction_data: transactionsToSave as any, // Cast to any to satisfy Json type
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (error) {
-        console.error('Error saving transactions:', error);
-        toast({
-          title: "Save Failed",
-          description: "Failed to save your transactions. Please try again.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Transactions Saved",
-          description: "Your transaction data has been securely saved.",
-        });
-      }
-    } catch (error) {
-      console.error('Error saving transactions:', error);
+    const result = await saveUserTransactions(user, transactionsToSave);
+    
+    if (result.success) {
+      toast({
+        title: "Transactions Saved",
+        description: "Your transaction data has been securely saved.",
+      });
+    } else {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save your transactions. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -129,7 +100,7 @@ const Index = () => {
     setScrollBottomCount(0);
     
     // Auto-save transactions for authenticated users
-    saveUserTransactions(importedTransactions);
+    handleSaveTransactions(importedTransactions);
   };
 
   useEffect(() => {

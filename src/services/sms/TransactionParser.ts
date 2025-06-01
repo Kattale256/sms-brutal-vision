@@ -1,12 +1,13 @@
 
 import { Transaction } from './types';
+import mtnParser from './MTNParser';
 
 export class TransactionParser {
   /**
    * Parses raw SMS text into transaction objects
    */
   public parseTransactionsFromText(text: string): Transaction[] {
-    const messages = text.split(/(?=SENT|RECEIVED|PAID|WITHDRAWN|DEPOSITED|You have sent|You have received|You have paid|You have withdrawn|You have deposited)/i)
+    const messages = text.split(/(?=SENT|RECEIVED|PAID|WITHDRAWN|DEPOSITED|You have sent|You have received|You have paid|You have withdrawn|You have deposited|Y'ello)/i)
       .filter(msg => msg.trim().length > 0);
     
     console.log(`Parsing ${messages.length} messages`);
@@ -14,7 +15,17 @@ export class TransactionParser {
     const transactions: Transaction[] = [];
     
     messages.forEach((message, index) => {
-      const transaction = this.parseTransactionMessage(message, index.toString());
+      const messageId = index.toString();
+      
+      // Try MTN parser first
+      const mtnTransaction = mtnParser.parseMTNTransaction(message, messageId);
+      if (mtnTransaction) {
+        transactions.push(mtnTransaction);
+        return;
+      }
+      
+      // Fall back to original parser for other formats
+      const transaction = this.parseTransactionMessage(message, messageId);
       if (transaction) {
         transactions.push(transaction);
       }
@@ -25,7 +36,7 @@ export class TransactionParser {
   }
 
   /**
-   * Parse a single transaction message
+   * Parse a single transaction message (original parser for non-MTN messages)
    */
   private parseTransactionMessage(message: string, id: string): Transaction | null {
     const lowerMessage = message.toLowerCase();

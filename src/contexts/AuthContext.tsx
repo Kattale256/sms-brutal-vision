@@ -2,13 +2,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { signUpUser, signInUser, signOutUser, SignUpData, SignInData } from '@/utils/authHelpers';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (data: SignUpData) => Promise<{ error: any }>;
+  signIn: (data: SignInData) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -48,41 +49,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: fullName ? { full_name: fullName } : undefined
-      }
-    });
-    
-    return { error };
+  const handleSignUp = async (data: SignUpData) => {
+    return await signUpUser(data);
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error };
+  const handleSignIn = async (data: SignInData) => {
+    return await signInUser(data);
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const handleSignOut = async () => {
+    await signOutUser();
   };
 
   const value = {
     user,
     session,
     loading,
-    signUp,
-    signIn,
-    signOut,
+    signUp: handleSignUp,
+    signIn: handleSignIn,
+    signOut: handleSignOut,
   };
 
   return (

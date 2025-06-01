@@ -28,9 +28,8 @@ class SmsReader {
     }
 
     try {
-      // Fix TypeScript error by using try-catch for permissions checking
       try {
-        // @ts-ignore - We need to ignore this because the Capacitor typings don't include Permissions
+        // @ts-ignore - Capacitor permissions API
         const permissionStatus = await Capacitor.Permissions?.query({ name: 'sms' });
         
         if (permissionStatus?.state === 'granted') {
@@ -39,7 +38,7 @@ class SmsReader {
         }
         
         if (permissionStatus?.state === 'prompt') {
-          // @ts-ignore - We need to ignore this because the Capacitor typings don't include Permissions
+          // @ts-ignore - Capacitor permissions API
           const requestResult = await Capacitor.Permissions?.request({ name: 'sms' });
           this.hasPermission = requestResult?.state === 'granted';
           return this.hasPermission;
@@ -70,7 +69,7 @@ class SmsReader {
         console.log("SmsReader plugin is available");
         
         try {
-          // @ts-ignore - We need to ignore this because the Capacitor typings don't include Plugins.SmsReader
+          // @ts-ignore - Custom SMS reader plugin
           const smsReader = Capacitor.Plugins?.SmsReader;
           
           if (smsReader) {
@@ -104,8 +103,14 @@ class SmsReader {
   }
 
   private formatSmsMessages(nativeMessages: any[]): SmsMessage[] {
-    // Implementation remains empty as it was in the original
-    return [];
+    // Format native SMS messages to our SmsMessage interface
+    return nativeMessages.map((msg, index) => ({
+      id: index.toString(),
+      sender: msg.sender || 'Unknown',
+      content: msg.content || '',
+      timestamp: msg.timestamp || new Date().toISOString(),
+      category: undefined
+    }));
   }
 }
 
