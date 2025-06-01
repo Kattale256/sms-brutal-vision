@@ -7,7 +7,8 @@ import {
   CarouselContent,
   CarouselItem,
   CarouselPrevious,
-  CarouselNext
+  CarouselNext,
+  CarouselApi
 } from './ui/carousel';
 
 interface Step {
@@ -19,6 +20,7 @@ interface Step {
 const HowToUseVideo: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [api, setApi] = useState<CarouselApi>();
   const intervalRef = useRef<number | null>(null);
   
   const steps: Step[] = [
@@ -50,9 +52,26 @@ const HowToUseVideo: React.FC = () => {
   ];
   
   React.useEffect(() => {
-    if (isPlaying) {
+    if (!api) return;
+
+    const onSelect = () => {
+      setCurrentStep(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    onSelect();
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+  
+  React.useEffect(() => {
+    if (isPlaying && api) {
       intervalRef.current = window.setInterval(() => {
-        setCurrentStep(prev => (prev + 1) % steps.length);
+        const current = api.selectedScrollSnap();
+        const next = (current + 1) % steps.length;
+        api.scrollTo(next);
       }, 4000);
     }
     
@@ -62,15 +81,18 @@ const HowToUseVideo: React.FC = () => {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, steps.length]);
+  }, [isPlaying, api, steps.length]);
   
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
   
   const resetAnimation = () => {
-    setCurrentStep(0);
-    setIsPlaying(true);
+    if (api) {
+      api.scrollTo(0);
+      setCurrentStep(0);
+      setIsPlaying(true);
+    }
   };
   
   return (
@@ -97,6 +119,7 @@ const HowToUseVideo: React.FC = () => {
       
       <Carousel 
         className="w-full"
+        setApi={setApi}
         opts={{
           loop: true,
           align: "start",
@@ -127,8 +150,10 @@ const HowToUseVideo: React.FC = () => {
               key={index}
               className={`w-2 h-2 rounded-full transition-colors ${currentStep === index ? 'bg-yellow-500' : 'bg-gray-300'}`}
               onClick={() => {
-                setCurrentStep(index);
-                setIsPlaying(false);
+                if (api) {
+                  api.scrollTo(index);
+                  setIsPlaying(false);
+                }
               }}
             />
           ))}
