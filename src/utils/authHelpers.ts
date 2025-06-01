@@ -13,34 +13,60 @@ export interface SignInData {
 }
 
 export const signUpUser = async ({ email, password, fullName }: SignUpData) => {
-  const redirectUrl = `${window.location.origin}/`;
-  
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: redirectUrl,
-      data: fullName ? { full_name: fullName } : undefined
-    }
-  });
-  
-  return { error };
+  try {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: fullName ? { full_name: fullName } : undefined
+      }
+    });
+    
+    return { error };
+  } catch (error) {
+    console.error('SignUp helper error:', error);
+    return { error };
+  }
 };
 
 export const signInUser = async ({ email, password }: SignInData) => {
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  
-  return { error };
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    return { error };
+  } catch (error) {
+    console.error('SignIn helper error:', error);
+    return { error };
+  }
 };
 
 export const signOutUser = async () => {
-  await supabase.auth.signOut();
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('SignOut error:', error);
+    }
+  } catch (error) {
+    console.error('SignOut helper error:', error);
+  }
 };
 
 export const getCurrentSession = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session;
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Get session error:', error);
+      return null;
+    }
+    return session;
+  } catch (error) {
+    console.error('Get session helper error:', error);
+    return null;
+  }
 };

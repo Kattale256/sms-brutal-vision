@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,18 +14,40 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ email: '', password: '', fullName: '' });
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/');
+    if (user && !authLoading) {
+      navigate('/', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
+
+  // Show loading spinner while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-neo-yellow" />
+          <p className="text-sm text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!loginData.email || !loginData.password) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -36,7 +59,7 @@ const Auth = () => {
       if (error) {
         toast({
           title: "Login Failed",
-          description: error.message,
+          description: error.message || "An error occurred during login.",
           variant: "destructive",
         });
       } else {
@@ -44,7 +67,6 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
-        navigate('/');
       }
     } catch (error) {
       toast({
@@ -59,6 +81,16 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!signupData.email || !signupData.password) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -78,7 +110,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Signup Failed",
-            description: error.message,
+            description: error.message || "An error occurred during signup.",
             variant: "destructive",
           });
         }
@@ -87,6 +119,8 @@ const Auth = () => {
           title: "Account Created!",
           description: "Please check your email to verify your account.",
         });
+        // Clear the form
+        setSignupData({ email: '', password: '', fullName: '' });
       }
     } catch (error) {
       toast({
@@ -126,6 +160,7 @@ const Auth = () => {
                     value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -137,6 +172,7 @@ const Auth = () => {
                     value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <Button 
@@ -144,7 +180,14 @@ const Auth = () => {
                   className="w-full bg-neo-yellow hover:bg-yellow-400"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Signing In...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
                 </Button>
               </form>
             </TabsContent>
@@ -159,6 +202,7 @@ const Auth = () => {
                     placeholder="Enter your full name"
                     value={signupData.fullName}
                     onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -170,6 +214,7 @@ const Auth = () => {
                     value={signupData.email}
                     onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -181,6 +226,7 @@ const Auth = () => {
                     value={signupData.password}
                     onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <Button 
@@ -188,7 +234,14 @@ const Auth = () => {
                   className="w-full bg-neo-yellow hover:bg-yellow-400"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
               </form>
             </TabsContent>

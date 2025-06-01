@@ -29,9 +29,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -39,26 +43,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Check for existing session only once
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSignUp = async (data: SignUpData) => {
-    return await signUpUser(data);
+    try {
+      return await signUpUser(data);
+    } catch (error) {
+      console.error('SignUp error:', error);
+      return { error };
+    }
   };
 
   const handleSignIn = async (data: SignInData) => {
-    return await signInUser(data);
+    try {
+      return await signInUser(data);
+    } catch (error) {
+      console.error('SignIn error:', error);
+      return { error };
+    }
   };
 
   const handleSignOut = async () => {
-    await signOutUser();
+    try {
+      await signOutUser();
+    } catch (error) {
+      console.error('SignOut error:', error);
+    }
   };
 
   const value = {
