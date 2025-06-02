@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Smartphone } from 'lucide-react';
+
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -29,6 +30,7 @@ const Auth = () => {
     toast
   } = useToast();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (user && !authLoading) {
       navigate('/', {
@@ -37,7 +39,6 @@ const Auth = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Show loading spinner while auth is initializing
   if (authLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -46,6 +47,7 @@ const Auth = () => {
         </div>
       </div>;
   }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.email || !loginData.password) {
@@ -86,6 +88,7 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signupData.email || !signupData.password) {
@@ -124,7 +127,6 @@ const Auth = () => {
           title: "Account Created!",
           description: "Please check your email to verify your account."
         });
-        // Clear the form
         setSignupData({
           email: '',
           password: '',
@@ -141,11 +143,10 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
   return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex flex-col">
-      {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-4 my-0 mx-0">
         <div className="w-full max-w-md">
-          {/* App Icon and Title */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-neo-yellow rounded-3xl border-4 border-neo-black shadow-neo-sm mb-6">
               <Smartphone className="h-10 w-10 text-neo-black" />
@@ -156,7 +157,6 @@ const Auth = () => {
             <p className="text-gray-600 font-medium">Analyze Your Tax Transactions With Ease</p>
           </div>
 
-          {/* Auth Card */}
           <Card className="border-4 border-neo-black shadow-neo bg-white rounded-2xl overflow-hidden">
             <CardHeader className="text-center py-8 bg-gradient-to-r from-gray-50 to-white">
               <CardTitle className="text-xl font-bold text-neo-black">Welcome</CardTitle>
@@ -167,8 +167,8 @@ const Auth = () => {
             <CardContent className="p-8">
               <Tabs defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl border-2 border-neo-black">
-                  <TabsTrigger value="login" className="rounded-lg font-semibold data-[state=active]:bg-neo-yellow data-[state=active]:text-neo-black data-[state=active]:shadow-neo-sm transition-all px-px">Log In</TabsTrigger>
-                  <TabsTrigger value="signup" className="rounded-lg font-semibold data-[state=active]:bg-neo-yellow data-[state=active]:text-neo-black data-[state=active]:shadow-neo-sm transition-all">
+                  <TabsTrigger value="login" className="rounded-xl font-semibold data-[state=active]:bg-neo-yellow data-[state=active]:text-neo-black data-[state=active]:shadow-neo-sm transition-all">Log In</TabsTrigger>
+                  <TabsTrigger value="signup" className="rounded-xl font-semibold data-[state=active]:bg-neo-yellow data-[state=active]:text-neo-black data-[state=active]:shadow-neo-sm transition-all">
                     Sign Up
                   </TabsTrigger>
                 </TabsList>
@@ -235,12 +235,12 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="text-center py-6">
         <p className="text-sm text-gray-500 font-medium">
-          Built By <span className="font-bold text-neo-black">KATTALE (U) Est. 2015</span>
+          Built By <span className="font-bold text-neo-black">Kattale Group (U)</span>
         </p>
       </div>
     </div>;
 };
+
 export default Auth;
