@@ -24,18 +24,33 @@ export class MTNParser {
     let phoneNumber: string | undefined;
     let timestamp = new Date().toISOString();
     
-    // Extract balance (common to all MTN messages)
-    const balanceRegex = /(?:new balance|balance is now):\s*ugx\s*([0-9,.]+)/i;
-    const balanceMatch = message.match(balanceRegex);
-    if (balanceMatch) {
-      balance = parseFloat(balanceMatch[1].replace(/,/g, ''));
+    // Extract balance (multiple patterns)
+    const balanceRegexes = [
+      /(?:new balance|balance is now|mobile money balance is now):\s*ugx\s*([0-9,.]+)/i,
+      /new balance:\s*ugx\s*([0-9,.]+)/i,
+      /balance is:\s*([0-9,.]+)/i
+    ];
+    
+    for (const regex of balanceRegexes) {
+      const match = message.match(regex);
+      if (match) {
+        balance = parseFloat(match[1].replace(/,/g, ''));
+        break;
+      }
     }
     
-    // Extract transaction ID (common to all MTN messages)
-    const idRegex = /(?:id|transaction id):\s*(\d+)/i;
-    const idMatch = message.match(idRegex);
-    if (idMatch) {
-      reference = idMatch[1];
+    // Extract transaction ID (multiple patterns)
+    const idRegexes = [
+      /(?:transaction id|id):\s*(\d+)/i,
+      /id:\s*(\d+)/i
+    ];
+    
+    for (const regex of idRegexes) {
+      const match = message.match(regex);
+      if (match) {
+        reference = match[1];
+        break;
+      }
     }
     
     // Extract timestamp if present
@@ -49,13 +64,20 @@ export class MTNParser {
     }
     
     // Parse withdrawal messages
-    if (lowerMessage.includes('you have withdrawn')) {
+    if (lowerMessage.includes('you have withdrawn') || lowerMessage.includes('withdrawn ugx')) {
       type = 'withdrawal';
       
-      const amountRegex = /you have withdrawn\s+ugx\s*([0-9,.]+)/i;
-      const amountMatch = message.match(amountRegex);
-      if (amountMatch) {
-        amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+      const amountRegexes = [
+        /(?:you have )?withdrawn\s+ugx\s*([0-9,.]+)/i,
+        /withdrawn ugx\s*([0-9,.]+)/i
+      ];
+      
+      for (const regex of amountRegexes) {
+        const match = message.match(regex);
+        if (match) {
+          amount = parseFloat(match[1].replace(/,/g, ''));
+          break;
+        }
       }
       
       const feeRegex = /fee:\s*ugx\s*([0-9,.]+)/i;
@@ -72,13 +94,20 @@ export class MTNParser {
     }
     
     // Parse deposit messages
-    else if (lowerMessage.includes('you have deposited')) {
+    else if (lowerMessage.includes('you have deposited') || lowerMessage.includes('deposited ugx')) {
       type = 'deposit';
       
-      const amountRegex = /you have deposited\s+ugx\s*([0-9,.]+)/i;
-      const amountMatch = message.match(amountRegex);
-      if (amountMatch) {
-        amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+      const amountRegexes = [
+        /(?:you have )?deposited\s+ugx\s*([0-9,.]+)/i,
+        /deposited ugx\s*([0-9,.]+)/i
+      ];
+      
+      for (const regex of amountRegexes) {
+        const match = message.match(regex);
+        if (match) {
+          amount = parseFloat(match[1].replace(/,/g, ''));
+          break;
+        }
       }
       
       const senderRegex = /from\s+([^0-9]+?)(?:\s+on|\s+\d)/i;
@@ -89,13 +118,20 @@ export class MTNParser {
     }
     
     // Parse payment messages
-    else if (lowerMessage.includes('you have paid')) {
+    else if (lowerMessage.includes('you have paid') || lowerMessage.includes('paid ugx')) {
       type = 'payment';
       
-      const amountRegex = /you have paid\s+ugx\s*([0-9,.]+)/i;
-      const amountMatch = message.match(amountRegex);
-      if (amountMatch) {
-        amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+      const amountRegexes = [
+        /(?:you have )?paid\s+ugx\s*([0-9,.]+)/i,
+        /paid ugx\s*([0-9,.]+)/i
+      ];
+      
+      for (const regex of amountRegexes) {
+        const match = message.match(regex);
+        if (match) {
+          amount = parseFloat(match[1].replace(/,/g, ''));
+          break;
+        }
       }
       
       const recipientRegex = /to\s+([^0-9]+?)(?:\s+on|\s+\d)/i;
@@ -109,29 +145,40 @@ export class MTNParser {
       if (feeMatch) {
         fee = parseFloat(feeMatch[1].replace(/,/g, ''));
       }
-      
-      const taxRegex = /tax:\s*ugx\s*([0-9,.]+)/i;
-      const taxMatch = message.match(taxRegex);
-      if (taxMatch) {
-        tax = parseFloat(taxMatch[1].replace(/,/g, ''));
-      }
     }
     
     // Parse receive messages
-    else if (lowerMessage.includes('you have received')) {
+    else if (lowerMessage.includes('you have received') || lowerMessage.includes('received ugx')) {
       type = 'receive';
       
-      const amountRegex = /you have received\s+ugx\s*([0-9,.]+)/i;
-      const amountMatch = message.match(amountRegex);
-      if (amountMatch) {
-        amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+      const amountRegexes = [
+        /(?:you have )?received\s+ugx\s*([0-9,.]+)/i,
+        /received ugx\s*([0-9,.]+)/i
+      ];
+      
+      for (const regex of amountRegexes) {
+        const match = message.match(regex);
+        if (match) {
+          amount = parseFloat(match[1].replace(/,/g, ''));
+          break;
+        }
       }
       
-      const senderRegex = /from\s+([^,]+),\s*(\d+)/i;
-      const senderMatch = message.match(senderRegex);
-      if (senderMatch) {
-        sender = senderMatch[1].trim();
-        phoneNumber = senderMatch[2];
+      // Handle different sender formats
+      const senderRegexes = [
+        /from\s+([^,]+),\s*(\d+)/i,
+        /from\s+([^0-9]+?)(?:\s*,\s*(\d+))?/i
+      ];
+      
+      for (const regex of senderRegexes) {
+        const match = message.match(regex);
+        if (match) {
+          sender = match[1].trim();
+          if (match[2]) {
+            phoneNumber = match[2];
+          }
+          break;
+        }
       }
       
       const feeRegex = /fee:\s*(\d+(?:\.\d+)?)/i;
@@ -143,13 +190,20 @@ export class MTNParser {
     }
     
     // Parse send messages
-    else if (lowerMessage.includes('you have sent')) {
+    else if (lowerMessage.includes('you have sent') || lowerMessage.includes('sent ugx')) {
       type = 'send';
       
-      const amountRegex = /you have sent\s+ugx\s*([0-9,.]+)/i;
-      const amountMatch = message.match(amountRegex);
-      if (amountMatch) {
-        amount = parseFloat(amountMatch[1].replace(/,/g, ''));
+      const amountRegexes = [
+        /(?:you have )?sent\s+ugx\s*([0-9,.]+)/i,
+        /sent ugx\s*([0-9,.]+)/i
+      ];
+      
+      for (const regex of amountRegexes) {
+        const match = message.match(regex);
+        if (match) {
+          amount = parseFloat(match[1].replace(/,/g, ''));
+          break;
+        }
       }
       
       const phoneRegex = /to\s+(\d+)/i;
@@ -163,17 +217,11 @@ export class MTNParser {
       if (feeMatch) {
         fee = parseFloat(feeMatch[1].replace(/,/g, ''));
       }
-      
-      const taxRegex = /tax:\s*ugx\s*([0-9,.]+)/i;
-      const taxMatch = message.match(taxRegex);
-      if (taxMatch) {
-        tax = parseFloat(taxMatch[1].replace(/,/g, ''));
-      }
     }
     
-    // Return null if we couldn't extract amount
-    if (amount === 0) {
-      console.log("Could not extract amount from MTN message:", message);
+    // Return null if we couldn't extract amount (but allow 0 for some special cases)
+    if (amount === 0 && !lowerMessage.includes('received: ugx 0')) {
+      console.log("Could not extract amount from MTN message:", message.substring(0, 100));
       return null;
     }
     
@@ -203,12 +251,16 @@ export class MTNParser {
       'dial *165*3#',
       'momo app',
       'do not share your mobile money pin',
-      'thank you for using mtn mobile money'
+      'thank you for using mtn mobile money',
+      'fee:ugx',
+      'transaction id:',
+      'mobile money balance is now'
     ];
     
     const lowerMessage = message.toLowerCase();
     return mtnIndicators.some(indicator => lowerMessage.includes(indicator)) ||
-           (lowerMessage.includes('you have') && lowerMessage.includes('ugx'));
+           (lowerMessage.includes('you have') && lowerMessage.includes('ugx')) ||
+           (lowerMessage.includes('ugx') && (lowerMessage.includes('id:') || lowerMessage.includes('transaction id:')));
   }
 }
 

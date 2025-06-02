@@ -7,27 +7,43 @@ export class TransactionParser {
    * Parses raw SMS text into transaction objects
    */
   public parseTransactionsFromText(text: string): Transaction[] {
-    const messages = text.split(/(?=SENT|RECEIVED|PAID|WITHDRAWN|DEPOSITED|You have sent|You have received|You have paid|You have withdrawn|You have deposited|Y'ello)/i)
-      .filter(msg => msg.trim().length > 0);
+    // Improved message splitting for MTN messages
+    const messages = text.split(/(?=(?:SENT|RECEIVED|PAID|WITHDRAWN|DEPOSITED|You have (?:sent|received|paid|withdrawn|deposited)|Y'ello[^\n]*You have))/i)
+      .filter(msg => msg.trim().length > 10); // Filter out very short fragments
     
     console.log(`Parsing ${messages.length} messages`);
     
     const transactions: Transaction[] = [];
     
     messages.forEach((message, index) => {
-      const messageId = index.toString();
+      const messageId = `msg_${index}_${Date.now()}`;
+      
+      // Clean up the message
+      const cleanMessage = message.trim();
+      
+      // Skip if message is too short or just fragments
+      if (cleanMessage.length < 20) {
+        console.log(`Skipping short message: "${cleanMessage}"`);
+        return;
+      }
+      
+      console.log(`Processing message ${index}: "${cleanMessage.substring(0, 100)}..."`);
       
       // Try MTN parser first
-      const mtnTransaction = mtnParser.parseMTNTransaction(message, messageId);
+      const mtnTransaction = mtnParser.parseMTNTransaction(cleanMessage, messageId);
       if (mtnTransaction) {
         transactions.push(mtnTransaction);
+        console.log(`MTN transaction parsed: ${mtnTransaction.type} - ${mtnTransaction.amount} ${mtnTransaction.currency}`);
         return;
       }
       
       // Fall back to original parser for other formats
-      const transaction = this.parseTransactionMessage(message, messageId);
+      const transaction = this.parseTransactionMessage(cleanMessage, messageId);
       if (transaction) {
         transactions.push(transaction);
+        console.log(`Generic transaction parsed: ${transaction.type} - ${transaction.amount} ${transaction.currency}`);
+      } else {
+        console.log(`Could not parse message: "${cleanMessage.substring(0, 100)}..."`);
       }
     });
     

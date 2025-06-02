@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Smartphone } from 'lucide-react';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,10 +27,10 @@ const Auth = () => {
   // Show loading spinner while auth is initializing
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-neo-yellow" />
-          <p className="text-sm text-gray-600">Initializing...</p>
+          <p className="text-sm text-gray-600 font-medium">Initializing...</p>
         </div>
       </div>
     );
@@ -134,120 +134,161 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-2 border-neo-black">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">SMS Transaction Analyzer</CardTitle>
-          <CardDescription>
-            Sign in to your account or create a new one to get started
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-neo-yellow hover:bg-yellow-400"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Signing In...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={signupData.fullName}
-                    onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={signupData.email}
-                    onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={signupData.password}
-                    onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-neo-yellow hover:bg-yellow-400"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Creating Account...
-                    </>
-                  ) : (
-                    'Create Account'
-                  )}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex flex-col">
+      {/* Main content */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* App Icon and Title */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-neo-yellow rounded-3xl border-4 border-neo-black shadow-neo-sm mb-6">
+              <Smartphone className="h-10 w-10 text-neo-black" />
+            </div>
+            <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">
+              KAMEME TAX APP
+            </h1>
+            <p className="text-gray-600 font-medium">
+              Analyze your SMS transactions with ease
+            </p>
+          </div>
+
+          {/* Auth Card */}
+          <Card className="border-4 border-neo-black shadow-neo bg-white rounded-2xl overflow-hidden">
+            <CardHeader className="text-center py-8 bg-gradient-to-r from-gray-50 to-white">
+              <CardTitle className="text-xl font-bold text-neo-black">Welcome</CardTitle>
+              <CardDescription className="text-gray-600 font-medium">
+                Sign in to your account or create a new one
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl border-2 border-neo-black">
+                  <TabsTrigger 
+                    value="login" 
+                    className="rounded-lg font-semibold data-[state=active]:bg-neo-yellow data-[state=active]:text-neo-black data-[state=active]:shadow-neo-sm transition-all"
+                  >
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="signup"
+                    className="rounded-lg font-semibold data-[state=active]:bg-neo-yellow data-[state=active]:text-neo-black data-[state=active]:shadow-neo-sm transition-all"
+                  >
+                    Sign Up
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="login" className="mt-6">
+                  <form onSubmit={handleLogin} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email" className="text-sm font-semibold text-gray-700">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={loginData.email}
+                        onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="h-12 border-2 border-gray-200 rounded-xl focus:border-neo-yellow focus:ring-0 transition-colors font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password" className="text-sm font-semibold text-gray-700">Password</Label>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="h-12 border-2 border-gray-200 rounded-xl focus:border-neo-yellow focus:ring-0 transition-colors font-medium"
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-neo-yellow hover:bg-yellow-400 text-neo-black font-bold rounded-xl border-2 border-neo-black shadow-neo-sm hover:shadow-neo transition-all duration-200 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Signing In...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="signup" className="mt-6">
+                  <form onSubmit={handleSignup} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name" className="text-sm font-semibold text-gray-700">Full Name</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={signupData.fullName}
+                        onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
+                        disabled={isLoading}
+                        className="h-12 border-2 border-gray-200 rounded-xl focus:border-neo-yellow focus:ring-0 transition-colors font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email" className="text-sm font-semibold text-gray-700">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={signupData.email}
+                        onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="h-12 border-2 border-gray-200 rounded-xl focus:border-neo-yellow focus:ring-0 transition-colors font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password" className="text-sm font-semibold text-gray-700">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="Create a password"
+                        value={signupData.password}
+                        onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                        required
+                        disabled={isLoading}
+                        className="h-12 border-2 border-gray-200 rounded-xl focus:border-neo-yellow focus:ring-0 transition-colors font-medium"
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-neo-yellow hover:bg-yellow-400 text-neo-black font-bold rounded-xl border-2 border-neo-black shadow-neo-sm hover:shadow-neo transition-all duration-200 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Creating Account...
+                        </>
+                      ) : (
+                        'Create Account'
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center py-6">
+        <p className="text-sm text-gray-500 font-medium">
+          Built By <span className="font-bold text-neo-black">Kattale Group (U)</span>
+        </p>
+      </div>
     </div>
   );
 };
