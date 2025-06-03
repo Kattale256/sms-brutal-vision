@@ -125,7 +125,7 @@ const Auth = () => {
       } else {
         toast({
           title: "Account Created!",
-          description: "Please check your email to verify your account."
+          description: "You have successfully created your account and can start using the app."
         });
         setSignupData({
           email: '',

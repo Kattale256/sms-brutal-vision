@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface SignUpData {
@@ -14,13 +13,11 @@ export interface SignInData {
 
 export const signUpUser = async ({ email, password, fullName }: SignUpData) => {
   try {
-    const redirectUrl = `${window.location.origin}/`;
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
+        emailRedirectTo: undefined, // Remove email redirect
         data: fullName ? { full_name: fullName } : undefined
       }
     });
