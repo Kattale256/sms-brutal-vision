@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Smartphone } from 'lucide-react';
-
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -30,7 +29,6 @@ const Auth = () => {
     toast
   } = useToast();
   const navigate = useNavigate();
-  
   useEffect(() => {
     if (user && !authLoading) {
       navigate('/', {
@@ -38,7 +36,6 @@ const Auth = () => {
       });
     }
   }, [user, authLoading, navigate]);
-  
   if (authLoading) {
     return <div className="min-h-screen bg-silver-light flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -47,7 +44,6 @@ const Auth = () => {
         </div>
       </div>;
   }
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.email || !loginData.password) {
@@ -88,7 +84,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signupData.email || !signupData.password) {
@@ -143,7 +138,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
   return <div className="min-h-screen bg-silver-light flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4 my-0 mx-0">
         <div className="w-full max-w-md">
@@ -152,7 +146,8 @@ const Auth = () => {
               <Smartphone className="h-10 w-10 text-neo-black" />
             </div>
             <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME TAX APP</h1>
-            <p className="text-gray-600 font-medium">Know Your Tax on Transactions With Ease</p>
+            <p className="text-gray-600 font-medium">Know The Tax On Your Transactions 
+- Safely & Easily -</p>
           </div>
 
           <Card className="border-4 border-neo-black shadow-neo bg-white rounded-2xl overflow-hidden">
@@ -238,5 +233,4 @@ const Auth = () => {
       </div>
     </div>;
 };
-
 export default Auth;
