@@ -33,7 +33,7 @@ const HowToUseVideo: React.FC<HowToUseVideoProps> = ({ onUserConfirmed }) => {
   const steps: Step[] = [
     {
       title: 'Step 1: Copy as many Mobile Money messages as you want',
-      description: 'Select and copy as many mobile money transaction messages as you want from your phone\'s SMS inbox',
+      description: 'Select and copy as many mobile money transaction messages as you want from your phone\'s SMS inbox. Pro tip: You can copy ALL messages at once instead of one by one!',
       icon: <div className="text-4xl">📱</div>,
     },
     {
@@ -42,8 +42,8 @@ const HowToUseVideo: React.FC<HowToUseVideoProps> = ({ onUserConfirmed }) => {
       icon: <div className="text-4xl">👆</div>,
     },
     {
-      title: 'Step 3: Paste messages in dialog',
-      description: 'Paste all your copied messages into the dialog box that appears',
+      title: 'Step 3: Paste ALL messages in dialog',
+      description: 'Paste all your copied messages into the dialog box that appears - multiple messages can be pasted together',
       icon: <div className="text-4xl">📋</div>,
     },
     {

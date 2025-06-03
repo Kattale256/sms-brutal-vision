@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Smartphone } from 'lucide-react';
+import AISecurityBadge from '@/components/AISecurityBadge';
+
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -146,8 +148,13 @@ const Auth = () => {
               <Smartphone className="h-10 w-10 text-neo-black" />
             </div>
             <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME TAX APP</h1>
-            <p className="text-gray-600 font-medium text-center">Know The Tax On Your Transactions  
+            <p className="text-gray-600 font-medium text-center">Know The Tax On Your Transactions  
 - Safely & Easily -</p>
+            
+            {/* AI Security Badge */}
+            <div className="flex justify-center mt-4">
+              <AISecurityBadge />
+            </div>
           </div>
 
           <Card className="border-4 border-neo-black shadow-neo bg-white rounded-2xl overflow-hidden">
@@ -230,7 +237,12 @@ const Auth = () => {
         <p className="text-sm text-gray-500 font-medium">
           Built By <span className="font-bold text-neo-black">KATTALE GROUP (UG) EST. 2015</span>
         </p>
+        {/* Minimal AI Security Badge in footer */}
+        <div className="flex justify-center mt-2">
+          <AISecurityBadge variant="minimal" />
+        </div>
       </div>
     </div>;
 };
+
 export default Auth;

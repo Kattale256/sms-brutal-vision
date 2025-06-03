@@ -3,6 +3,8 @@ import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/sms/SmsReader';
 import { Transaction } from '../services/sms/types';
 import { Clipboard, Smartphone } from 'lucide-react';
+import QuickTip from './QuickTip';
+
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
   onTransactionsImport?: (transactions: Transaction[]) => void;
@@ -93,11 +95,14 @@ const Header: React.FC<{
       <div className="flex flex-col gap-4">
         <div className="text-center lg:text-left">
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black text-center">
-
-AKAMEME TAX APP 
-
-        </h1>
-          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">The Safe & Easy App Extracting Tax Insights For You From Your Mobile Money Transactions </p>
+            AKAMEME TAX APP 
+          </h1>
+          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">The Safe & Easy App Extracting Tax Insights For You From Your Mobile Money Transactions </p>
+        </div>
+        
+        {/* Quick Tip Section */}
+        <div className="mb-2">
+          <QuickTip />
         </div>
         
         {/* Large prominent PASTE SMS button */}
@@ -141,4 +146,5 @@ AKAMEME TAX APP 
         </div>}
     </header>;
 };
+
 export default Header;

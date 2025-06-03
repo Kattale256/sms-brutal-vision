@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import MessageStats from '../components/MessageStats';
@@ -20,6 +19,7 @@ import UserMenu from '../components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { loadUserTransactions, saveUserTransactions } from '@/utils/transactionStorage';
+import AISecurityBadge from '@/components/AISecurityBadge';
 
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
@@ -157,7 +157,8 @@ const Index = () => {
               onTransactionsImport={handleTransactionsImport}
             />
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
+            <AISecurityBadge className="order-2 sm:order-1" />
             <UserMenu />
           </div>
         </div>
@@ -210,13 +211,16 @@ const Index = () => {
         </main>
 
         <footer className="mt-8 pt-4 border-t-4 border-neo-black text-center bg-white rounded-lg shadow-neo">
-          <p className="text-neo-gray text-sm font-medium">
-            AKAMEME TAX APP • FIRM D1 PROJECT • LDC KAMPALA • {new Date().getFullYear()}
-            {Capacitor.isNativePlatform() ? ' • MOBILE APP' : ''}
-          </p>
-          <p className="text-sm text-gray-500 font-medium mt-2">
-            Built By <span className="font-bold text-neo-black">KATTALE GROUP (UG) EST. 2015</span>
-          </p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-neo-gray text-sm font-medium">
+              AKAMEME TAX APP • FIRM D1 PROJECT • LDC KAMPALA • {new Date().getFullYear()}
+              {Capacitor.isNativePlatform() ? ' • MOBILE APP' : ''}
+            </p>
+            <p className="text-sm text-gray-500 font-medium">
+              Built By <span className="font-bold text-neo-black">KATTALE GROUP (UG) EST. 2015</span>
+            </p>
+            <AISecurityBadge variant="minimal" />
+          </div>
         </footer>
       </div>
     </div>
