@@ -93,8 +93,10 @@ const Header: React.FC<{
       <div className="flex flex-col gap-4">
         <div className="text-center lg:text-left">
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black text-center">
-            AKAMEME TAX APP - FIRM D1 PROJECT
-          </h1>
+
+AKAMEME TAX APP 
+
+        </h1>
           <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">
             African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025
           </p>
