@@ -140,7 +140,13 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-  return <div className="min-h-screen bg-silver-light flex flex-col">
+  return (
+    <div className="min-h-screen bg-silver-light flex flex-col">
+      {/* AI Security Badge at the very top */}
+      <div className="flex justify-center pt-4 pb-2">
+        <AISecurityBadge />
+      </div>
+
       <div className="flex-1 flex items-center justify-center p-4 my-0 mx-0">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -150,11 +156,6 @@ const Auth = () => {
             <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME TAX APP</h1>
             <p className="text-gray-600 font-medium text-center">Know The Tax On Your Transactions  
 - Safely & Easily -</p>
-            
-            {/* AI Security Badge */}
-            <div className="flex justify-center mt-4">
-              <AISecurityBadge />
-            </div>
           </div>
 
           <Card className="border-4 border-neo-black shadow-neo bg-white rounded-2xl overflow-hidden">
@@ -233,16 +234,17 @@ const Auth = () => {
         </div>
       </div>
 
+      {/* Footer with AI Security Badge at the very bottom */}
       <div className="text-center py-6">
         <p className="text-sm text-gray-500 font-medium">
           Built By <span className="font-bold text-neo-black">KATTALE GROUP (UG) EST. 2015</span>
         </p>
-        {/* Minimal AI Security Badge in footer */}
         <div className="flex justify-center mt-2">
           <AISecurityBadge variant="minimal" />
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Auth;

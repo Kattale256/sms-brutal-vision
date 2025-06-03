@@ -149,6 +149,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-silver-light p-2 sm:p-4">
+      {/* AI Security Badge at the very top */}
+      <div className="flex justify-center mb-4">
+        <AISecurityBadge />
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div className="flex-1 w-full">
@@ -157,8 +162,7 @@ const Index = () => {
               onTransactionsImport={handleTransactionsImport}
             />
           </div>
-          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
-            <AISecurityBadge className="order-2 sm:order-1" />
+          <div className="w-full sm:w-auto flex justify-end">
             <UserMenu />
           </div>
         </div>
@@ -219,6 +223,7 @@ const Index = () => {
             <p className="text-sm text-gray-500 font-medium">
               Built By <span className="font-bold text-neo-black">KATTALE GROUP (UG) EST. 2015</span>
             </p>
+            {/* AI Security Badge at the very bottom */}
             <AISecurityBadge variant="minimal" />
           </div>
         </footer>
