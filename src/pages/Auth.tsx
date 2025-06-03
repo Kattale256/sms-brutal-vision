@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Smartphone } from 'lucide-react';
-
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -30,7 +29,6 @@ const Auth = () => {
     toast
   } = useToast();
   const navigate = useNavigate();
-
   useEffect(() => {
     if (user && !authLoading) {
       navigate('/', {
@@ -38,7 +36,6 @@ const Auth = () => {
       });
     }
   }, [user, authLoading, navigate]);
-
   if (authLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -47,7 +44,6 @@ const Auth = () => {
         </div>
       </div>;
   }
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.email || !loginData.password) {
@@ -88,7 +84,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signupData.email || !signupData.password) {
@@ -143,7 +138,6 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-
   return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4 my-0 mx-0">
         <div className="w-full max-w-md">
@@ -151,9 +145,7 @@ const Auth = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-neo-yellow rounded-3xl border-4 border-neo-black shadow-neo-sm mb-6">
               <Smartphone className="h-10 w-10 text-neo-black" />
             </div>
-            <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">
-              KAMEME TAX APP
-            </h1>
+            <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME TAX APP</h1>
             <p className="text-gray-600 font-medium">Analyze Your Tax Transactions With Ease</p>
           </div>
 
@@ -242,5 +234,4 @@ const Auth = () => {
       </div>
     </div>;
 };
-
 export default Auth;
