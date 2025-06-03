@@ -97,7 +97,7 @@ const Header: React.FC<{
 AKAMEME TAX APP 
 
         </h1>
-          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">The Safe & Secure App Extracting Tax Insights For You From Your Mobile Money Transactions </p>
+          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">The Safe & Easy App Extracting Tax Insights For You From Your Mobile Money Transactions </p>
         </div>
         
         {/* Large prominent PASTE SMS button */}
