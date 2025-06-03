@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import SmsReader from '../services/sms/SmsReader';
 import { Transaction } from '../services/sms/types';
 import { Clipboard, Smartphone } from 'lucide-react';
-
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
   onTransactionsImport?: (transactions: Transaction[]) => void;
@@ -12,11 +10,12 @@ const Header: React.FC<{
   onSmsImport,
   onTransactionsImport
 }) => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const smsReader = SmsReader.getInstance();
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [pastedText, setPastedText] = useState('');
-
   const handleSmsImport = async () => {
     if (smsReader.isNativePlatform()) {
       const hasPermission = await smsReader.requestSmsPermission();
@@ -52,7 +51,6 @@ const Header: React.FC<{
       setShowPasteDialog(true);
     }
   };
-
   const handlePasteSubmit = () => {
     if (!pastedText.trim()) {
       toast({
@@ -70,7 +68,7 @@ const Header: React.FC<{
           description: `${transactions.length} transactions extracted.`
         });
         setShowPasteDialog(false);
-        
+
         // Directly import transactions
         if (onTransactionsImport) {
           onTransactionsImport(transactions);
@@ -91,12 +89,10 @@ const Header: React.FC<{
       });
     }
   };
-
-  return (
-    <header className="border-b-4 border-neo-black mb-6 pb-6 bg-white rounded-lg shadow-neo">
+  return <header className="border-b-4 border-neo-black mb-6 pb-6 bg-white rounded-lg shadow-neo">
       <div className="flex flex-col gap-4">
         <div className="text-center lg:text-left">
-          <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black">
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black text-center">
             AKAMEME TAX APP - FIRM D1 PROJECT
           </h1>
           <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base">
@@ -106,27 +102,19 @@ const Header: React.FC<{
         
         {/* Large prominent PASTE SMS button */}
         <div className="flex justify-center">
-          <button 
-            className="w-full max-w-sm h-16 bg-neo-yellow hover:bg-yellow-400 text-neo-black font-bold text-xl border-4 border-neo-black shadow-neo hover:shadow-neo-lg active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-200 rounded-lg flex items-center justify-center gap-3"
-            onClick={handleSmsImport}
-          >
-            {smsReader.isNativePlatform() ? (
-              <>
+          <button className="w-full max-w-sm h-16 bg-neo-yellow hover:bg-yellow-400 text-neo-black font-bold text-xl border-4 border-neo-black shadow-neo hover:shadow-neo-lg active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-200 rounded-lg flex items-center justify-center gap-3" onClick={handleSmsImport}>
+            {smsReader.isNativePlatform() ? <>
                 <Smartphone className="w-8 h-8" /> 
                 READ SMS
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Clipboard className="w-8 h-8" /> 
                 PASTE SMS
-              </>
-            )}
+              </>}
           </button>
         </div>
       </div>
       
-      {showPasteDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      {showPasteDialog && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white border-4 border-neo-black max-w-2xl w-full mx-4 shadow-neo rounded-lg overflow-hidden">
             <div className="p-6">
               <h2 className="text-2xl font-bold mb-4 text-center">PASTE TRANSACTION SMS</h2>
@@ -135,36 +123,22 @@ const Header: React.FC<{
                 Multiple messages can be pasted together.
               </p>
               
-              <textarea 
-                className="w-full h-64 p-4 border-2 border-neo-black mb-4 rounded-lg resize-none focus:outline-none focus:border-neo-yellow" 
-                placeholder="Paste your SMS transaction messages here..."
-                value={pastedText}
-                onChange={e => setPastedText(e.target.value)}
-              />
+              <textarea className="w-full h-64 p-4 border-2 border-neo-black mb-4 rounded-lg resize-none focus:outline-none focus:border-neo-yellow" placeholder="Paste your SMS transaction messages here..." value={pastedText} onChange={e => setPastedText(e.target.value)} />
               
               <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                <button 
-                  className="flex-1 sm:flex-none px-6 py-3 bg-transparent border-2 border-neo-black font-bold hover:bg-gray-100 transition-colors rounded-lg" 
-                  onClick={() => {
-                    setShowPasteDialog(false);
-                    setPastedText('');
-                  }}
-                >
+                <button className="flex-1 sm:flex-none px-6 py-3 bg-transparent border-2 border-neo-black font-bold hover:bg-gray-100 transition-colors rounded-lg" onClick={() => {
+              setShowPasteDialog(false);
+              setPastedText('');
+            }}>
                   CANCEL
                 </button>
-                <button 
-                  className="flex-1 sm:flex-none px-6 py-3 bg-neo-yellow hover:bg-yellow-400 border-2 border-neo-black font-bold shadow-neo-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-200 rounded-lg" 
-                  onClick={handlePasteSubmit}
-                >
+                <button className="flex-1 sm:flex-none px-6 py-3 bg-neo-yellow hover:bg-yellow-400 border-2 border-neo-black font-bold shadow-neo-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-200 rounded-lg" onClick={handlePasteSubmit}>
                   PROCESS
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </header>
-  );
+        </div>}
+    </header>;
 };
-
 export default Header;
