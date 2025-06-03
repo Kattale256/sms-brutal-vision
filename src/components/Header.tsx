@@ -95,7 +95,7 @@ const Header: React.FC<{
           <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black text-center">
             AKAMEME TAX APP - FIRM D1 PROJECT
           </h1>
-          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base">
+          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">
             African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025
           </p>
         </div>
