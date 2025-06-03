@@ -146,7 +146,7 @@ const Auth = () => {
               <Smartphone className="h-10 w-10 text-neo-black" />
             </div>
             <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME TAX APP</h1>
-            <p className="text-gray-600 font-medium">Know The Tax On Your Transactions 
+            <p className="text-gray-600 font-medium text-center">Know The Tax On Your Transactions  
 - Safely & Easily -</p>
           </div>
 
