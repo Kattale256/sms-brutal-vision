@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { Transaction } from '../../../services/SmsReader';
 import { 
@@ -89,18 +88,19 @@ export const exportFreeToExcel = (transactions: Transaction[], quarterInfo?: Qua
   const transactionWS = XLSX.utils.json_to_sheet(transactionData);
   XLSX.utils.book_append_sheet(workbook, transactionWS, "Transaction List");
   
-  // Copyright and Disclosure sheet
+  // Copyright and Disclosure sheet with AKAMEME branding
   const currentYear = new Date().getFullYear();
   const quarterText = quarterInfo ? quarterInfo.label : "Full Financial Year";
   const copyrightData = [
     { Notice: 'FREE BASIC VERSION' },
     { Notice: 'This is a basic free version without security features.' },
     { Notice: '' },
-    { Notice: `Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.` },
+    { Notice: `Extracted By AKAMEME TAX APP - FIRM D1 Research Project on E-Payment Message Notification Analysis.` },
     { Notice: `(c) ${currentYear} FIRM D1, LDC KAMPALA` },
+    { Notice: 'Built By KATTALE GROUP (UG) EST. 2015' },
     { Notice: '' },
     { Notice: 'DISCLOSURE' },
-    { Notice: 'This free version is provided courtesy of UATEA-Uganda.' },
+    { Notice: 'This free version is provided courtesy of AKAMEME TAX APP.' },
     { Notice: `Report Period: ${quarterText}` },
     { Notice: '' },
     { Notice: 'For premium secured version with verification features, please purchase the premium version.' }
@@ -114,7 +114,7 @@ export const exportFreeToExcel = (transactions: Transaction[], quarterInfo?: Qua
     '_All_Time';
   
   // Write file
-  XLSX.writeFile(workbook, `transaction-stats${periodText}_FREE.xlsx`);
+  XLSX.writeFile(workbook, `akameme-tax-app-report${periodText}_FREE.xlsx`);
   
-  toast.success(`Free report exported successfully!`);
+  toast.success(`AKAMEME TAX APP free report exported successfully!`);
 };

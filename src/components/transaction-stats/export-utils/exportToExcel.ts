@@ -109,10 +109,11 @@ export const exportToExcel = (transactions: Transaction[], quarterInfo?: Quarter
   const securityWS = XLSX.utils.json_to_sheet(securityData);
   XLSX.utils.book_append_sheet(workbook, securityWS, "Security Info");
   
-  // Copyright sheet
+  // Copyright sheet with AKAMEME branding
   const copyrightData = [
-    { Notice: 'Extracted By Firm D1 Research Project on E-Payment Message Notification Analysis.' },
+    { Notice: 'Extracted By AKAMEME TAX APP - FIRM D1 Research Project on E-Payment Message Notification Analysis.' },
     { Notice: `(c) ${new Date().getFullYear()} FIRM D1, LDC KAMPALA` },
+    { Notice: 'Built By KATTALE GROUP (UG) EST. 2015' },
     { Notice: 'This is a secure document with verification enabled.' }
   ];
   const copyrightWS = XLSX.utils.json_to_sheet(copyrightData);
@@ -124,7 +125,7 @@ export const exportToExcel = (transactions: Transaction[], quarterInfo?: Quarter
     '_All_Time';
   
   // Write file
-  XLSX.writeFile(workbook, `transaction-stats${periodText}.xlsx`);
+  XLSX.writeFile(workbook, `akameme-tax-app-report${periodText}.xlsx`);
   
-  toast.success(`Report exported successfully!`);
+  toast.success(`AKAMEME TAX APP report exported successfully!`);
 };

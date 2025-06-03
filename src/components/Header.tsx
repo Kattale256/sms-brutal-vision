@@ -71,7 +71,7 @@ const Header: React.FC<{
         });
         setShowPasteDialog(false);
         
-        // Directly import transactions without showing survey
+        // Directly import transactions
         if (onTransactionsImport) {
           onTransactionsImport(transactions);
         }
@@ -92,47 +92,79 @@ const Header: React.FC<{
     }
   };
 
-  return <header className="border-b-4 border-neo-black mb-6 pb-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tighter">FIRM D1 PROJECT - LDC - COPY &amp; PASTE YOUR TRANSACTION MESSAGES HERE &gt;&gt;</h1>
-          <p className="text-neo-gray font-medium mt-1">African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025</p>
+  return (
+    <header className="border-b-4 border-neo-black mb-6 pb-6 bg-white rounded-lg shadow-neo">
+      <div className="flex flex-col gap-4">
+        <div className="text-center lg:text-left">
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black">
+            AKAMEME TAX APP - FIRM D1 PROJECT
+          </h1>
+          <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base">
+            African AI Tool to Extract Insights from Mobile Money Transactions - FIRM D1 Research Project LDC (c) 2025
+          </p>
         </div>
-        <div>
-          <button className="neo-button bg-neo-yellow flex items-center gap-2" onClick={handleSmsImport}>
-            {smsReader.isNativePlatform() ? <>
-                <Smartphone className="w-5 h-5" /> READ SMS
-              </> : <>
-                <Clipboard className="w-5 h-5" /> PASTE SMS
-              </>}
+        
+        {/* Large prominent PASTE SMS button */}
+        <div className="flex justify-center">
+          <button 
+            className="w-full max-w-sm h-16 bg-neo-yellow hover:bg-yellow-400 text-neo-black font-bold text-xl border-4 border-neo-black shadow-neo hover:shadow-neo-lg active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-200 rounded-lg flex items-center justify-center gap-3"
+            onClick={handleSmsImport}
+          >
+            {smsReader.isNativePlatform() ? (
+              <>
+                <Smartphone className="w-8 h-8" /> 
+                READ SMS
+              </>
+            ) : (
+              <>
+                <Clipboard className="w-8 h-8" /> 
+                PASTE SMS
+              </>
+            )}
           </button>
         </div>
       </div>
       
-      {showPasteDialog && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="neo-card max-w-xl w-full m-4">
-            <h2 className="text-2xl font-bold mb-4">PASTE TRANSACTION SMS</h2>
-            <p className="mb-4">
-              Copy the transaction SMS messages from your phone and paste them below.
-              Multiple messages can be pasted together.
-            </p>
-            
-            <textarea className="w-full h-64 p-4 border-2 border-neo-black mb-4" placeholder="Paste your SMS transaction messages here..." value={pastedText} onChange={e => setPastedText(e.target.value)}></textarea>
-            
-            <div className="flex gap-4 justify-end">
-              <button className="neo-button bg-transparent border-2 border-neo-black" onClick={() => {
-            setShowPasteDialog(false);
-            setPastedText('');
-          }}>
-                CANCEL
-              </button>
-              <button className="neo-button bg-neo-yellow" onClick={handlePasteSubmit}>
-                PROCESS
-              </button>
+      {showPasteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white border-4 border-neo-black max-w-2xl w-full mx-4 shadow-neo rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4 text-center">PASTE TRANSACTION SMS</h2>
+              <p className="mb-4 text-center">
+                Copy as many transaction SMS messages as you want from your phone and paste them below.
+                Multiple messages can be pasted together.
+              </p>
+              
+              <textarea 
+                className="w-full h-64 p-4 border-2 border-neo-black mb-4 rounded-lg resize-none focus:outline-none focus:border-neo-yellow" 
+                placeholder="Paste your SMS transaction messages here..."
+                value={pastedText}
+                onChange={e => setPastedText(e.target.value)}
+              />
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-end">
+                <button 
+                  className="flex-1 sm:flex-none px-6 py-3 bg-transparent border-2 border-neo-black font-bold hover:bg-gray-100 transition-colors rounded-lg" 
+                  onClick={() => {
+                    setShowPasteDialog(false);
+                    setPastedText('');
+                  }}
+                >
+                  CANCEL
+                </button>
+                <button 
+                  className="flex-1 sm:flex-none px-6 py-3 bg-neo-yellow hover:bg-yellow-400 border-2 border-neo-black font-bold shadow-neo-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-200 rounded-lg" 
+                  onClick={handlePasteSubmit}
+                >
+                  PROCESS
+                </button>
+              </div>
             </div>
           </div>
-        </div>}
-    </header>;
+        </div>
+      )}
+    </header>
+  );
 };
 
 export default Header;

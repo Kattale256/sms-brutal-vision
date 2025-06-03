@@ -63,12 +63,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Neo-brutalist theme colors
+				// Updated color scheme with silver grey and yellow
 				"neo-black": "#1A1F2C",
 				"neo-gray": "#403E43",
 				"neo-white": "#FFFFFF",
 				"neo-red": "#FF5252",
 				"neo-yellow": "#FFD600",
+				"silver-light": "#E5E5E5",
+				"silver": "#C0C0C0",
+				"silver-dark": "#A8A8A8",
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -79,6 +82,8 @@ export default {
 				'neo': '5px 5px 0px 0px rgba(0,0,0,1)',
 				'neo-sm': '3px 3px 0px 0px rgba(0,0,0,1)',
 				'neo-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
+				'glow': '0 0 20px rgba(255, 214, 0, 0.5)',
+				'glow-lg': '0 0 30px rgba(255, 214, 0, 0.7)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -96,11 +101,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px rgba(255, 214, 0, 0.5)'
+					},
+					'50%': {
+						boxShadow: '0 0 30px rgba(255, 214, 0, 0.8)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
 			}
 		}
 	},

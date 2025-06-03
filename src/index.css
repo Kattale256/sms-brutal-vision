@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
 
 @tailwind base;
@@ -6,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 229 229 229; /* Silver light background */
     --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
@@ -53,7 +54,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-silver-light text-foreground;
     font-family: 'Space Grotesk', sans-serif;
     overscroll-behavior: none;
   }
@@ -88,6 +89,10 @@
   
   .neo-chart {
     @apply border-4 border-neo-black bg-white p-4 shadow-neo overflow-hidden;
+  }
+
+  .highlight-glow {
+    @apply animate-pulse-glow border-4 border-neo-yellow bg-white shadow-glow-lg;
   }
 
   @media (max-width: 640px) {

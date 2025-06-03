@@ -26,6 +26,7 @@ const Index = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeView, setActiveView] = useState<'sms' | 'transactions'>('sms');
   const [scrollBottomCount, setScrollBottomCount] = useState(0);
+  const [userHasConfirmedTutorial, setUserHasConfirmedTutorial] = useState(false);
   const [sectionOrder, setSectionOrder] = useState([
     'transaction-stats',
     'transaction-timeline',
@@ -36,6 +37,7 @@ const Index = () => {
   ]);
   
   const resultsRef = useRef<HTMLDivElement>(null);
+  const downloadSectionRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -101,6 +103,16 @@ const Index = () => {
     
     // Auto-save transactions for authenticated users
     handleSaveTransactions(importedTransactions);
+
+    // Scroll to download section after processing
+    setTimeout(() => {
+      if (downloadSectionRef.current) {
+        downloadSectionRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 500);
   };
 
   useEffect(() => {
@@ -113,9 +125,12 @@ const Index = () => {
   }, []);
 
   const renderTransactionSections = () => {
-    // Object with all the sections
     const sections: Record<string, JSX.Element> = {
-      'transaction-stats': <TransactionStats transactions={transactions} />,
+      'transaction-stats': (
+        <div ref={downloadSectionRef}>
+          <TransactionStats transactions={transactions} />
+        </div>
+      ),
       'transaction-timeline': <TransactionTimeline transactions={transactions} />,
       'transaction-calendar': <TransactionCalendar transactions={transactions} />,
       'top-contacts': <TransactionContacts transactions={transactions} />,
@@ -133,35 +148,46 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] p-4">
+    <div className="min-h-screen bg-silver-light p-2 sm:p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div className="flex-1 w-full">
             <Header
               onSmsImport={handleSmsImport}
               onTransactionsImport={handleTransactionsImport}
             />
           </div>
-          <UserMenu />
+          <div className="w-full sm:w-auto">
+            <UserMenu />
+          </div>
         </div>
 
-        {/* New features - How to Use Video and File Verifier */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <HowToUseVideo />
+        {/* Tutorial and Verification - Show tutorial with highlight until confirmed */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+          <HowToUseVideo onUserConfirmed={() => setUserHasConfirmedTutorial(true)} />
           <FileVerifier />
         </div>
 
+        {/* View Toggle */}
         {transactions.length > 0 && (
           <div className="flex justify-center mb-6">
-            <div className="inline-flex p-1 border-2 border-neo-black">
+            <div className="inline-flex p-1 border-2 border-neo-black bg-white rounded-lg overflow-hidden">
               <button
-                className={`px-4 py-2 ${activeView === 'transactions' ? 'bg-neo-yellow' : 'bg-transparent'}`}
+                className={`px-4 py-2 font-bold transition-all ${
+                  activeView === 'transactions' 
+                    ? 'bg-neo-yellow text-neo-black' 
+                    : 'bg-transparent hover:bg-silver-light'
+                }`}
                 onClick={() => setActiveView('transactions')}
               >
                 TRANSACTIONS
               </button>
               <button
-                className={`px-4 py-2 ${activeView === 'sms' ? 'bg-neo-yellow' : 'bg-transparent'}`}
+                className={`px-4 py-2 font-bold transition-all ${
+                  activeView === 'sms' 
+                    ? 'bg-neo-yellow text-neo-black' 
+                    : 'bg-transparent hover:bg-silver-light'
+                }`}
                 onClick={() => setActiveView('sms')}
               >
                 SMS MESSAGES
@@ -170,7 +196,7 @@ const Index = () => {
           </div>
         )}
 
-        <main ref={resultsRef}>
+        <main ref={resultsRef} className="space-y-6">
           {activeView === 'transactions' && transactions.length > 0 ? (
             renderTransactionSections()
           ) : (
@@ -183,10 +209,13 @@ const Index = () => {
           )}
         </main>
 
-        <footer className="mt-8 pt-4 border-t-4 border-neo-black text-center">
-          <p className="text-neo-gray text-sm">
-            D1 PROJECT • LDC KAMPALA • {new Date().getFullYear()}
+        <footer className="mt-8 pt-4 border-t-4 border-neo-black text-center bg-white rounded-lg shadow-neo">
+          <p className="text-neo-gray text-sm font-medium">
+            AKAMEME TAX APP • FIRM D1 PROJECT • LDC KAMPALA • {new Date().getFullYear()}
             {Capacitor.isNativePlatform() ? ' • MOBILE APP' : ''}
+          </p>
+          <p className="text-sm text-gray-500 font-medium mt-2">
+            Built By <span className="font-bold text-neo-black">KATTALE GROUP (UG) EST. 2015</span>
           </p>
         </footer>
       </div>

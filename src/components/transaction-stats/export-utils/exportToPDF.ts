@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { Transaction } from '../../../services/SmsReader';
 import { 
@@ -9,8 +8,6 @@ import {
 import { generateDocumentMetadata, generateQRCodeData } from '../../../utils/securityUtils';
 import { QuarterInfo } from '../../../utils/quarterUtils';
 import { toast } from 'sonner';
-import { renderToString } from 'react-dom/server';
-import SecurityFooter from '../../security/SecurityFooter';
 
 export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterInfo | null) => {
   // Track export count
@@ -57,11 +54,11 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
   // Create PDF document
   const doc = new jsPDF();
   
-  // Title
+  // Title with AKAMEME branding
   doc.setFontSize(20);
   const title = quarterInfo ? 
-    `Transaction Report - ${quarterInfo.label}` :
-    'Transaction Statistics Report';
+    `AKAMEME TAX APP Report - ${quarterInfo.label}` :
+    'AKAMEME TAX APP - Transaction Statistics Report';
   doc.text(title, 20, 20);
   
   let yPosition = 30;
@@ -177,23 +174,20 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     yPosition = 20;
   }
   
-  // Add verification info
+  // Add verification info with AKAMEME branding
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
   doc.text(`Document ID: ${metadata.documentId}`, 20, 270);
   doc.text(`Generated: ${new Date(metadata.timestamp).toLocaleString()}`, 20, 275);
-  doc.text(`Verification URL: ${window.location.origin}/verify?id=${metadata.documentId}`, 20, 280);
-  
-  // Add QR code (in a real app, this would be rendered to an image and added)
-  doc.setFontSize(8);
-  doc.text("Scan QR code to verify document authenticity", 150, 265);
+  doc.text(`Built By KATTALE GROUP (UG) EST. 2015`, 20, 280);
+  doc.text(`Verification URL: ${window.location.origin}/verify?id=${metadata.documentId}`, 20, 285);
   
   // Generate filename based on quarter info
   const periodText = quarterInfo ? 
     `_${quarterInfo.label.replace(/\//g, '_')}` : 
     '_All_Time';
 
-  doc.save(`transaction-visualizations${periodText}.pdf`);
+  doc.save(`akameme-tax-app-report${periodText}.pdf`);
   
-  toast.success(`Report exported successfully!`);
+  toast.success(`AKAMEME TAX APP report exported successfully!`);
 };
