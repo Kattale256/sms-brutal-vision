@@ -20,37 +20,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { loadUserTransactions, saveUserTransactions } from '@/utils/transactionStorage';
 import AISecurityBadge from '@/components/AISecurityBadge';
-
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeView, setActiveView] = useState<'sms' | 'transactions'>('sms');
   const [scrollBottomCount, setScrollBottomCount] = useState(0);
   const [userHasConfirmedTutorial, setUserHasConfirmedTutorial] = useState(false);
-  const [sectionOrder, setSectionOrder] = useState([
-    'transaction-stats',
-    'transaction-timeline',
-    'transaction-calendar',
-    'top-contacts',
-    'transaction-list',
-    'transaction-chat'
-  ]);
-  
+  const [sectionOrder, setSectionOrder] = useState(['transaction-stats', 'transaction-timeline', 'transaction-calendar', 'top-contacts', 'transaction-list', 'transaction-chat']);
   const resultsRef = useRef<HTMLDivElement>(null);
   const downloadSectionRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-  const { toast } = useToast();
-
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     const handleScroll = () => {
       if (!resultsRef.current) return;
       const el = resultsRef.current;
       if (window.scrollY + window.innerHeight >= el.offsetTop + el.offsetHeight - 40) {
-        setScrollBottomCount((prev) => Math.min(3, prev + 1));
+        setScrollBottomCount(prev => Math.min(3, prev + 1));
       }
     };
     window.addEventListener('scroll', handleScroll);
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -60,61 +53,53 @@ const Index = () => {
       loadSavedTransactions();
     }
   }, [user]);
-
   const loadSavedTransactions = async () => {
     if (!user) return;
-
     const savedTransactions = await loadUserTransactions(user);
     if (savedTransactions.length > 0) {
       setTransactions(savedTransactions);
       setActiveView('transactions');
     }
   };
-
   const handleSaveTransactions = async (transactionsToSave: Transaction[]) => {
     if (!user || transactionsToSave.length === 0) return;
-
     const result = await saveUserTransactions(user, transactionsToSave);
-    
     if (result.success) {
       toast({
         title: "Transactions Saved",
-        description: "Your transaction data has been securely saved.",
+        description: "Your transaction data has been securely saved."
       });
     } else {
       toast({
         title: "Save Failed",
         description: "Failed to save your transactions. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleSmsImport = (importedMessages: SmsMessage[]) => {
     setMessages(importedMessages);
     setActiveView('sms');
     setScrollBottomCount(0);
   };
-
   const handleTransactionsImport = (importedTransactions: Transaction[]) => {
     setTransactions(importedTransactions);
     setActiveView('transactions');
     setScrollBottomCount(0);
-    
+
     // Auto-save transactions for authenticated users
     handleSaveTransactions(importedTransactions);
 
     // Scroll to download section after processing
     setTimeout(() => {
       if (downloadSectionRef.current) {
-        downloadSectionRef.current.scrollIntoView({ 
+        downloadSectionRef.current.scrollIntoView({
           behavior: 'smooth',
           block: 'start'
         });
       }
     }, 500);
   };
-
   useEffect(() => {
     setSectionOrder(prevOrder => {
       if (!prevOrder.includes('transaction-chat')) {
@@ -123,44 +108,29 @@ const Index = () => {
       return prevOrder;
     });
   }, []);
-
   const renderTransactionSections = () => {
     const sections: Record<string, JSX.Element> = {
-      'transaction-stats': (
-        <div ref={downloadSectionRef}>
+      'transaction-stats': <div ref={downloadSectionRef}>
           <TransactionStats transactions={transactions} />
-        </div>
-      ),
+        </div>,
       'transaction-timeline': <TransactionTimeline transactions={transactions} />,
       'transaction-calendar': <TransactionCalendar transactions={transactions} />,
       'top-contacts': <TransactionContacts transactions={transactions} />,
       'transaction-list': <TransactionList transactions={transactions} />,
       'transaction-chat': <TransactionChat transactions={transactions} />
     };
-
-    return sectionOrder
-      .filter(id => sections[id])
-      .map(id => (
-        <div key={id}>
+    return sectionOrder.filter(id => sections[id]).map(id => <div key={id}>
           {sections[id]}
-        </div>
-      ));
+        </div>);
   };
-
-  return (
-    <div className="min-h-screen bg-silver-light p-2 sm:p-4">
+  return <div className="min-h-screen bg-silver-light p-2 sm:p-4">
       {/* AI Security Badge at the very top */}
-      <div className="flex justify-center mb-4">
-        <AISecurityBadge />
-      </div>
+      
 
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div className="flex-1 w-full">
-            <Header
-              onSmsImport={handleSmsImport}
-              onTransactionsImport={handleTransactionsImport}
-            />
+            <Header onSmsImport={handleSmsImport} onTransactionsImport={handleTransactionsImport} />
           </div>
           <div className="w-full sm:w-auto flex justify-end">
             <UserMenu />
@@ -174,44 +144,24 @@ const Index = () => {
         </div>
 
         {/* View Toggle */}
-        {transactions.length > 0 && (
-          <div className="flex justify-center mb-6">
+        {transactions.length > 0 && <div className="flex justify-center mb-6">
             <div className="inline-flex p-1 border-2 border-neo-black bg-white rounded-lg overflow-hidden">
-              <button
-                className={`px-4 py-2 font-bold transition-all ${
-                  activeView === 'transactions' 
-                    ? 'bg-neo-yellow text-neo-black' 
-                    : 'bg-transparent hover:bg-silver-light'
-                }`}
-                onClick={() => setActiveView('transactions')}
-              >
+              <button className={`px-4 py-2 font-bold transition-all ${activeView === 'transactions' ? 'bg-neo-yellow text-neo-black' : 'bg-transparent hover:bg-silver-light'}`} onClick={() => setActiveView('transactions')}>
                 TRANSACTIONS
               </button>
-              <button
-                className={`px-4 py-2 font-bold transition-all ${
-                  activeView === 'sms' 
-                    ? 'bg-neo-yellow text-neo-black' 
-                    : 'bg-transparent hover:bg-silver-light'
-                }`}
-                onClick={() => setActiveView('sms')}
-              >
+              <button className={`px-4 py-2 font-bold transition-all ${activeView === 'sms' ? 'bg-neo-yellow text-neo-black' : 'bg-transparent hover:bg-silver-light'}`} onClick={() => setActiveView('sms')}>
                 SMS MESSAGES
               </button>
             </div>
-          </div>
-        )}
+          </div>}
 
         <main ref={resultsRef} className="space-y-6">
-          {activeView === 'transactions' && transactions.length > 0 ? (
-            renderTransactionSections()
-          ) : (
-            <>
+          {activeView === 'transactions' && transactions.length > 0 ? renderTransactionSections() : <>
               <MessageStats messages={messages} />
               <MessageTimeline messages={messages} />
               <MessageCategories messages={messages} />
               <MessageList messages={messages} />
-            </>
-          )}
+            </>}
         </main>
 
         <footer className="mt-8 pt-4 border-t-4 border-neo-black text-center bg-white rounded-lg shadow-neo">
@@ -228,8 +178,6 @@ const Index = () => {
           </div>
         </footer>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
