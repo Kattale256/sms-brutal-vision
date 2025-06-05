@@ -10,6 +10,7 @@ interface ExcelButtonProps {
   transactions: Transaction[];
   onClick?: () => void;
   selectedQuarter?: QuarterInfo | null;
+  className?: string;
 }
 
 // Create a standalone export function that can be called from anywhere
@@ -17,7 +18,7 @@ export const handleExportToExcel = (transactions: Transaction[], selectedQuarter
   exportToExcel(transactions, selectedQuarter);
 };
 
-const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions, onClick, selectedQuarter }) => {
+const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions, onClick, selectedQuarter, className }) => {
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -28,7 +29,7 @@ const ExcelButton: React.FC<ExcelButtonProps> = ({ transactions, onClick, select
   };
 
   return (
-    <Button onClick={handleClick} variant="outline" className="gap-2">
+    <Button onClick={handleClick} variant="outline" className={`gap-2 ${className || ''}`}>
       <FileDown className="h-4 w-4" />
       Export to Excel
     </Button>
