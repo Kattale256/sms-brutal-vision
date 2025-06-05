@@ -16,10 +16,12 @@ import TransactionChat from '../components/TransactionChat';
 import FileVerifier from '../components/security/FileVerifier';
 import HowToUseVideo from '../components/HowToUseVideo';
 import UserMenu from '../components/UserMenu';
+import DownloadAPKButton from '../components/DownloadAPKButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { loadUserTransactions, saveUserTransactions } from '@/utils/transactionStorage';
 import AISecurityBadge from '@/components/AISecurityBadge';
+
 const Index = () => {
   const [messages, setMessages] = useState<SmsMessage[]>(sampleSmsData);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -142,6 +144,13 @@ const Index = () => {
           <HowToUseVideo onUserConfirmed={() => setUserHasConfirmedTutorial(true)} />
           <FileVerifier />
         </div>
+
+        {/* Download APK Button - Show only on web platform */}
+        {!Capacitor.isNativePlatform() && (
+          <div className="mb-6">
+            <DownloadAPKButton />
+          </div>
+        )}
 
         {/* View Toggle */}
         {transactions.length > 0 && <div className="flex justify-center mb-6">
