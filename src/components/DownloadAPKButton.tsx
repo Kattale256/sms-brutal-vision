@@ -1,39 +1,33 @@
 
 import React from 'react';
 import { Button } from './ui/button';
-import { Download, Smartphone } from 'lucide-react';
+import { Download, Smartphone, Clock } from 'lucide-react';
 import { Card } from './ui/card';
 
 const DownloadAPKButton: React.FC = () => {
-  const handleDownload = () => {
-    // This would typically point to your APK file hosted somewhere
-    // For now, we'll show instructions to users
-    window.open('https://github.com/your-username/your-repo/releases/latest', '_blank');
-  };
-
   return (
-    <Card className="p-4 bg-gradient-to-r from-neo-yellow/10 to-silver-light border-2 border-neo-yellow">
+    <Card className="p-4 bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-gray-300">
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-center gap-2">
-          <Smartphone className="w-6 h-6 text-neo-black" />
-          <h3 className="text-lg font-bold text-neo-black">Get Mobile App</h3>
+          <Smartphone className="w-6 h-6 text-gray-500" />
+          <h3 className="text-lg font-bold text-gray-600">Get Mobile App</h3>
         </div>
         
-        <p className="text-sm text-center text-neo-gray">
-          Download the native Android app for offline access to all features
+        <p className="text-sm text-center text-gray-500">
+          Native Android app for offline access to all features
         </p>
         
         <Button 
-          onClick={handleDownload}
-          className="w-full bg-neo-yellow hover:bg-yellow-400 text-neo-black font-bold border-2 border-neo-black shadow-neo-sm hover:shadow-neo transition-all duration-200 active:translate-x-1 active:translate-y-1 active:shadow-none"
+          disabled
+          className="w-full bg-gray-300 text-gray-500 font-bold border-2 border-gray-400 cursor-not-allowed opacity-60"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Download Android APK
+          <Clock className="w-4 h-4 mr-2" />
+          Coming Soon
         </Button>
         
-        <div className="text-xs text-center text-gray-500">
-          <p>• Works completely offline</p>
-          <p>• No internet required after download</p>
+        <div className="text-xs text-center text-gray-400">
+          <p>• Feature in development</p>
+          <p>• Will work completely offline</p>
           <p>• All data stays on your device</p>
         </div>
       </div>

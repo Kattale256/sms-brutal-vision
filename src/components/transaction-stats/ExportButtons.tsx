@@ -46,17 +46,25 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
   };
   
   return (
-    <div className="flex justify-end gap-2">
-      <ExcelButton 
-        onClick={() => handleExportClick('excel')} 
-        transactions={transactions}
-        selectedQuarter={selectedQuarter}
-      />
-      <PDFButton 
-        onClick={() => handleExportClick('pdf')} 
-        transactions={transactions}
-        selectedQuarter={selectedQuarter}
-      />
+    <div className="flex flex-col sm:flex-row justify-end gap-2 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="w-full sm:w-auto">
+          <ExcelButton 
+            onClick={() => handleExportClick('excel')} 
+            transactions={transactions}
+            selectedQuarter={selectedQuarter}
+            className="w-full sm:w-auto bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white border-orange-600"
+          />
+        </div>
+        <div className="w-full sm:w-auto">
+          <PDFButton 
+            onClick={() => handleExportClick('pdf')} 
+            transactions={transactions}
+            selectedQuarter={selectedQuarter}
+            className="w-full sm:w-auto bg-gradient-to-r from-coral-400 to-coral-500 hover:from-coral-500 hover:to-coral-600 text-white border-coral-600"
+          />
+        </div>
+      </div>
       
       <ExportOptions 
         isOpen={optionsDialogOpen}

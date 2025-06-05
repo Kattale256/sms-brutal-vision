@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Transaction } from '../../services/SmsReader';
 import { getAllQuartersInData, getCurrentQuarter, QuarterInfo } from '../../utils/quarterUtils';
@@ -62,26 +63,33 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
           }
         }}
       >
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 gap-4">
           <h3 className="text-lg font-bold">Financial Quarter</h3>
-          <TabsList>
-            {showAllOption && (
-              <TabsTrigger value="all">
-                All Time
-              </TabsTrigger>
-            )}
-            {quarters.map((quarter) => (
-              <TabsTrigger 
-                key={getTabValue(quarter)} 
-                value={getTabValue(quarter)}
-                className={quarter.quarter === currentQuarter.quarter && 
-                  quarter.financialYear === currentQuarter.financialYear ? 
-                  'border-2 border-neo-yellow' : ''}
-              >
-                {quarter.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="overflow-x-auto">
+            <TabsList className="flex flex-nowrap min-w-full lg:min-w-0 w-max lg:w-auto">
+              {showAllOption && (
+                <TabsTrigger 
+                  value="all"
+                  className="whitespace-nowrap px-3 py-2 text-sm lg:text-base"
+                >
+                  All Time
+                </TabsTrigger>
+              )}
+              {quarters.map((quarter) => (
+                <TabsTrigger 
+                  key={getTabValue(quarter)} 
+                  value={getTabValue(quarter)}
+                  className={`whitespace-nowrap px-3 py-2 text-sm lg:text-base ${
+                    quarter.quarter === currentQuarter.quarter && 
+                    quarter.financialYear === currentQuarter.financialYear ? 
+                    'border-2 border-neo-yellow' : ''
+                  }`}
+                >
+                  {quarter.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
         </div>
       </Tabs>
       

@@ -42,11 +42,9 @@ const TaxesChart: React.FC<TaxesChartProps> = ({ transactions }) => {
               data={data}
               cx="50%"
               cy="50%"
-              labelLine={true}
               outerRadius={100}
               fill="#8884d8"
               dataKey="value"
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
@@ -59,9 +57,15 @@ const TaxesChart: React.FC<TaxesChartProps> = ({ transactions }) => {
               return `${value} ${mainCurrency}`;
             }} />
             <Legend 
+              verticalAlign="bottom" 
+              height={36}
               formatter={(value, entry, index) => {
                 const item = data[index];
-                return `${value} (${item.value.toFixed(2)} ${mainCurrency})`;
+                return (
+                  <span style={{ color: '#1A1F2C', fontWeight: 'bold' }}>
+                    {value} ({item.value.toFixed(2)} {mainCurrency})
+                  </span>
+                );
               }}
             />
           </PieChart>

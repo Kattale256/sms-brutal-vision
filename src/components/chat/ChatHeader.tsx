@@ -13,7 +13,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ onExport, onClear }) => {
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-2xl font-bold flex items-center gap-2">
         <MessageCircle className="h-6 w-6" />
-        TRANSACTION ASSISTANT
+        UNCLE T
       </h2>
       <div className="flex gap-2">
         <Button 

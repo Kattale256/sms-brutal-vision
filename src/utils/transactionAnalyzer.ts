@@ -12,7 +12,8 @@ export const getTotalsByType = (transactions: Transaction[]): Record<string, num
   };
   
   transactions.forEach(transaction => {
-    totals[transaction.type] = (totals[transaction.type] || 0) + transaction.amount;
+    const type = transaction.type || 'other';
+    totals[type] = (totals[type] || 0) + transaction.amount;
   });
   
   return totals;

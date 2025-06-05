@@ -30,11 +30,9 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
               data={recipientsPieData}
               cx="50%"
               cy="50%"
-              labelLine={false}
               outerRadius={80}
               fill="#36A2EB"
               dataKey="value"
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
             >
               {recipientsPieData.map((entry, index) => (
                 <Cell key={`pie-cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1A1F2C" strokeWidth={2} />
@@ -48,7 +46,15 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
                 borderRadius: '0px'
               }}
             />
-            <Legend />
+            <Legend 
+              verticalAlign="bottom" 
+              height={36}
+              formatter={(value) => (
+                <span style={{ color: '#1A1F2C', fontWeight: 'bold' }}>
+                  {value.length > 20 ? `${value.substring(0, 20)}...` : value}
+                </span>
+              )}
+            />
           </PieChart>
         </ResponsiveContainer>
       ) : (

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Transaction } from '../services/sms/types';
 import { analyzeTransactionQuery, generateMessageId } from '../utils/transactionChat';
@@ -16,7 +17,7 @@ interface TransactionChatProps {
   transactions: Transaction[];
 }
 
-const STORAGE_KEY = 'transaction-chat-history';
+const STORAGE_KEY = 'uncle-t-chat-history';
 
 const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
@@ -54,7 +55,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       // Add welcome message if no history exists
       const welcomeMessage = {
         id: generateMessageId(),
-        content: "Hi! I can help you analyze your transaction data. Try asking questions like 'What's my total income?' or use the FAQ tabs below.",
+        content: "Hey there! I'm Uncle T, your friendly transaction assistant. I can help you analyze your AKAMEME TAX APP data. Try asking questions like 'What's my total income?' or use the FAQ tabs below. Let's make sense of your money together!",
         role: 'assistant' as const,
         timestamp: new Date(),
       };
@@ -116,7 +117,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       // Handle error
       const errorMessage: ChatMessageType = {
         id: generateMessageId(),
-        content: "Sorry, I encountered an error analyzing your transactions. Please try again.",
+        content: "Sorry, I encountered an error analyzing your transactions. Please try again, and I'll do my best to help you out!",
         role: 'assistant',
         timestamp: new Date(),
       };
@@ -126,7 +127,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       
       toast({
         title: "Analysis Error",
-        description: "Could not analyze your transaction data.",
+        description: "Uncle T couldn't analyze your transaction data.",
         variant: "destructive",
       });
     }
@@ -149,7 +150,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
   const clearChat = () => {
     const welcomeMessage = {
       id: generateMessageId(),
-      content: "Chat cleared. How else can I help analyze your AKAMEME TAX APP transactions?",
+      content: "Chat cleared! I'm Uncle T, ready to help you analyze your AKAMEME TAX APP transactions again. What would you like to know?",
       role: 'assistant' as const,
       timestamp: new Date(),
     };
@@ -169,14 +170,14 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `akameme-tax-app-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+      link.download = `uncle-t-akameme-chat-${new Date().toISOString().slice(0, 10)}.txt`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
       toast({
         title: "Chat Exported",
-        description: "Your AKAMEME TAX APP chat history has been downloaded.",
+        description: "Your Uncle T chat history has been downloaded.",
       });
     } catch (error) {
       console.error('Error exporting chat history:', error);
