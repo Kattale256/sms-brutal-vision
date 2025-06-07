@@ -7,7 +7,6 @@ import RecipientsPieChart from './RecipientsPieChart';
 import FeesOverTime from './FeesOverTime';
 import ExportButtons from './ExportButtons';
 import TaxesChart from './TaxesChart';
-import CashFlowStatement from './CashFlowStatement';
 import QuarterSelector from './QuarterSelector';
 import { QuarterInfo } from '../../utils/quarterUtils';
 import { filterTransactionsByQuarter } from '../../utils/quarterUtils';
@@ -31,10 +30,9 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="flex justify-between items-center">
-        <CashFlowStatement 
-          transactions={filteredTransactions} 
-          selectedQuarter={selectedQuarter}
-        />
+        <div className="flex-1">
+          {/* Removed CashFlowStatement as it's now integrated in ExportButtons */}
+        </div>
         <ExportButtons 
           transactions={filteredTransactions} 
           selectedQuarter={selectedQuarter}
