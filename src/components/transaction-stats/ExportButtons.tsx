@@ -5,11 +5,14 @@ import { ExcelButton, PDFButton } from './buttons';
 import { handleExportToExcel, handleExportToPDF } from './buttons';
 import { exportFreeToExcel } from './export-utils/exportFreeToExcel';
 import { exportFreeToPDF } from './export-utils/exportFreeToPDF';
+import { exportFreeCashFlowToPDF } from './export-utils/exportFreeCashFlowToPDF';
+import { exportCashFlowToPDF } from './export-utils/exportCashFlow';
 import { QuarterInfo } from '../../utils/quarterUtils';
 import PaymentDialog from '../payment/PaymentDialog';
 import ExportOptions from './buttons/ExportOptions';
 import { PaymentProduct, EXPORT_PRODUCTS } from '../../services/MoMoService';
-import CashFlowStatement from './CashFlowStatement';
+import { Button } from '../ui/button';
+import { FileDown } from 'lucide-react';
 
 interface ExportButtonsProps {
   transactions: Transaction[];
@@ -19,10 +22,10 @@ interface ExportButtonsProps {
 const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQuarter }) => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<PaymentProduct | null>(null);
-  const [pendingExportType, setPendingExportType] = useState<'excel' | 'pdf' | null>(null);
+  const [pendingExportType, setPendingExportType] = useState<'excel' | 'pdf' | 'cashflow' | null>(null);
   const [optionsDialogOpen, setOptionsDialogOpen] = useState(false);
   
-  const handleExportClick = (exportType: 'excel' | 'pdf') => {
+  const handleExportClick = (exportType: 'excel' | 'pdf' | 'cashflow') => {
     setPendingExportType(exportType);
     setOptionsDialogOpen(true);
   };
@@ -37,11 +40,18 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
     setOptionsDialogOpen(false);
   };
   
+  const handleFreeCashFlowExport = () => {
+    exportFreeCashFlowToPDF(transactions, selectedQuarter);
+    setOptionsDialogOpen(false);
+  };
+  
   const handlePremiumExport = () => {
     if (pendingExportType === 'excel') {
       handleExportToExcel(transactions, selectedQuarter);
     } else if (pendingExportType === 'pdf') {
       handleExportToPDF(transactions, selectedQuarter);
+    } else if (pendingExportType === 'cashflow') {
+      exportCashFlowToPDF(transactions, selectedQuarter);
     }
     setOptionsDialogOpen(false);
   };
@@ -66,12 +76,13 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
           />
         </div>
         <div className="w-full">
-          <div className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-2 border-blue-700 shadow-lg font-bold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-xl">
-            <CashFlowStatement 
-              transactions={transactions}
-              selectedQuarter={selectedQuarter}
-            />
-          </div>
+          <Button 
+            onClick={() => handleExportClick('cashflow')} 
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-2 border-blue-700 shadow-lg font-bold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-xl gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            Download Cash Flow Statement PDF
+          </Button>
         </div>
       </div>
       
@@ -81,7 +92,7 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
         exportType={pendingExportType || 'pdf'}
         transactions={transactions}
         selectedQuarter={selectedQuarter}
-        onFreeExport={pendingExportType === 'excel' ? handleFreeExcelExport : handleFreePdfExport}
+        onFreeExport={pendingExportType === 'excel' ? handleFreeExcelExport : pendingExportType === 'cashflow' ? handleFreeCashFlowExport : handleFreePdfExport}
         onPremiumExport={handlePremiumExport}
       />
     </div>

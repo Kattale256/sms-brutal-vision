@@ -25,6 +25,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [categorizations, setCategorizations] = useState<TransactionCategorization[]>([]);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   
   const typeLabels = {
     send: 'Sent',
@@ -64,6 +65,9 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
       return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
     }
   });
+  
+  // Pagination logic
+  const displayedTransactions = itemsPerPage === -1 ? sortedTransactions : sortedTransactions.slice(0, itemsPerPage);
   
   const handleCategoryChange = (transactionId: string, category: string) => {
     setCategorizations(prev => {
@@ -130,26 +134,44 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
         <h2 className="text-2xl font-bold">TRANSACTION LIST</h2>
         
-        <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
-          <button
-            className={`px-3 py-1 border-2 border-neo-black ${
-              selectedType === null ? 'bg-neo-yellow' : 'bg-transparent'
-            }`}
-            onClick={() => setSelectedType(null)}
-          >
-            All
-          </button>
-          {transactionTypes.map(type => (
+        <div className="flex flex-wrap gap-2 mt-2 md:mt-0 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">Show:</span>
+            <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(parseInt(value))}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="40">40</SelectItem>
+                <SelectItem value="60">60</SelectItem>
+                <SelectItem value="-1">All</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
             <button
-              key={type}
               className={`px-3 py-1 border-2 border-neo-black ${
-                selectedType === type ? 'bg-neo-yellow' : 'bg-transparent'
+                selectedType === null ? 'bg-neo-yellow' : 'bg-transparent'
               }`}
-              onClick={() => setSelectedType(type)}
+              onClick={() => setSelectedType(null)}
             >
-              {typeLabels[type as keyof typeof typeLabels]}
+              All
             </button>
-          ))}
+            {transactionTypes.map(type => (
+              <button
+                key={type}
+                className={`px-3 py-1 border-2 border-neo-black ${
+                  selectedType === type ? 'bg-neo-yellow' : 'bg-transparent'
+                }`}
+                onClick={() => setSelectedType(type)}
+              >
+                {typeLabels[type as keyof typeof typeLabels]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       
@@ -177,8 +199,8 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedTransactions.length > 0 ? (
-              sortedTransactions.map((transaction, idx) => {
+            {displayedTransactions.length > 0 ? (
+              displayedTransactions.map((transaction, idx) => {
                 const categorization = getCategorization(transaction.id);
                 const subcategories = categorization?.category === 'business-income' 
                   ? BUSINESS_INCOME_SUBCATEGORIES 
@@ -275,6 +297,14 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
           </TableBody>
         </Table>
       </div>
+      
+      {itemsPerPage !== -1 && sortedTransactions.length > itemsPerPage && (
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">
+            Showing {Math.min(itemsPerPage, sortedTransactions.length)} of {sortedTransactions.length} transactions
+          </p>
+        </div>
+      )}
     </div>
   );
 };

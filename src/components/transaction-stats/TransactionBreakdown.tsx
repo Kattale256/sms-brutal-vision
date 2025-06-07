@@ -2,7 +2,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Transaction } from '../../services/SmsReader';
-import { getTotalsByType } from '../../utils/transactionAnalyzer';
+import { getTotalsByType, getTotalFees, getTotalTaxes } from '../../utils/transactionAnalyzer';
 
 interface TransactionBreakdownProps {
   transactions: Transaction[];
@@ -10,6 +10,8 @@ interface TransactionBreakdownProps {
 
 const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transactions }) => {
   const totalsByType = getTotalsByType(transactions);
+  const totalFees = getTotalFees(transactions);
+  const totalTaxes = getTotalTaxes(transactions);
   
   const typeLabels = {
     send: 'Sent',
@@ -17,7 +19,9 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     payment: 'Payments',
     withdrawal: 'Withdrawals',
     deposit: 'Deposits',
-    other: 'Other'
+    other: 'Other',
+    fees: 'Fees',
+    taxes: 'Taxes'
   };
 
   // Color mapping to match TransactionSummary
@@ -27,10 +31,19 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     payment: '#3b82f6', // blue
     withdrawal: '#8b5cf6', // purple
     deposit: '#f59e0b', // amber
-    other: '#6b7280' // gray
+    other: '#6b7280', // gray
+    fees: '#f59e0b', // amber
+    taxes: '#ef4444' // red
   };
   
-  const chartData = Object.entries(totalsByType)
+  // Combine all data including fees and taxes
+  const allData = {
+    ...totalsByType,
+    fees: totalFees,
+    taxes: totalTaxes
+  };
+  
+  const chartData = Object.entries(allData)
     .filter(([_, value]) => value > 0)
     .map(([type, amount]) => ({
       name: typeLabels[type as keyof typeof typeLabels],
@@ -49,19 +62,20 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     <div className="neo-chart">
       <h2 className="text-2xl font-bold mb-4">TRANSACTION BREAKDOWN</h2>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 60, bottom: 80 }}>
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 80, bottom: 100 }}>
           <XAxis 
             dataKey="name" 
             stroke="#1A1F2C" 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 11 }}
             angle={-45}
             textAnchor="end"
-            height={80}
+            height={100}
+            interval={0}
           />
           <YAxis 
             stroke="#1A1F2C" 
             tick={{ fontSize: 12 }}
-            width={60}
+            width={80}
             tickFormatter={(value) => `${value.toLocaleString()}`}
           />
           <Tooltip 

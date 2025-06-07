@@ -45,10 +45,12 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
     return quarter ? `${quarter.quarter}-${quarter.financialYear}` : 'all';
   };
   
+  const currentTabValue = getTabValue(selectedQuarter);
+  
   return (
     <div className="mb-6">
       <Tabs 
-        value={selectedQuarter ? getTabValue(selectedQuarter) : 'all'}
+        value={currentTabValue}
         onValueChange={(value) => {
           if (value === 'all') {
             onQuarterChange(null);

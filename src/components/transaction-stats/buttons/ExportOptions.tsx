@@ -75,7 +75,7 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Export {getExportTypeName()}</DialogTitle>
+            <DialogTitle>Download {getExportTypeName()}</DialogTitle>
             <DialogDescription>
               Choose between the free basic version or the premium secured version {getPeriodText()}
             </DialogDescription>
@@ -87,7 +87,7 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
               onClick={() => onFreeExport()}
             >
               <h3 className="font-bold text-lg mb-2">Free Basic Version</h3>
-              <p className="text-sm mb-4">Simple export without advanced security features</p>
+              <p className="text-sm mb-4">Simple download without advanced security features</p>
               <ul className="text-xs space-y-1 flex-grow">
                 <li>• Basic formatting</li>
                 <li>• Copyright information</li>

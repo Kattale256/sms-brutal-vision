@@ -31,7 +31,7 @@ const PDFButton: React.FC<PDFButtonProps> = ({ transactions, onClick, selectedQu
   return (
     <Button onClick={handleClick} variant="outline" className={`gap-2 ${className || ''}`}>
       <FileDown className="h-4 w-4" />
-      Export PDF Report
+      Download PDF Report
     </Button>
   );
 };
