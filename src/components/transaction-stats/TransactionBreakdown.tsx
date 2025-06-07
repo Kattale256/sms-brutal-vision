@@ -19,12 +19,23 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     deposit: 'Deposits',
     other: 'Other'
   };
+
+  // Color mapping to match TransactionSummary
+  const typeColors = {
+    send: '#f97316', // orange
+    receive: '#10b981', // emerald
+    payment: '#3b82f6', // blue
+    withdrawal: '#8b5cf6', // purple
+    deposit: '#f59e0b', // amber
+    other: '#6b7280' // gray
+  };
   
   const chartData = Object.entries(totalsByType)
     .filter(([_, value]) => value > 0)
     .map(([type, amount]) => ({
       name: typeLabels[type as keyof typeof typeLabels],
-      amount: amount
+      amount: amount,
+      fill: typeColors[type as keyof typeof typeColors]
     }));
   
   // Get most common currency
@@ -38,9 +49,21 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     <div className="neo-chart">
       <h2 className="text-2xl font-bold mb-4">TRANSACTION BREAKDOWN</h2>
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-          <XAxis dataKey="name" stroke="#1A1F2C" />
-          <YAxis stroke="#1A1F2C" />
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 60, bottom: 80 }}>
+          <XAxis 
+            dataKey="name" 
+            stroke="#1A1F2C" 
+            tick={{ fontSize: 12 }}
+            angle={-45}
+            textAnchor="end"
+            height={80}
+          />
+          <YAxis 
+            stroke="#1A1F2C" 
+            tick={{ fontSize: 12 }}
+            width={60}
+            tickFormatter={(value) => `${value.toLocaleString()}`}
+          />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: '#FFFFFF', 
@@ -51,7 +74,11 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
             labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
             formatter={(value) => [`${value} ${mainCurrency}`, 'Amount']}
           />
-          <Bar dataKey="amount" fill="#FF5252" stroke="#1A1F2C" strokeWidth={2} />
+          <Bar 
+            dataKey="amount" 
+            stroke="#1A1F2C" 
+            strokeWidth={2}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

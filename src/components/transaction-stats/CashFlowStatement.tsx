@@ -35,9 +35,9 @@ const CashFlowStatement: React.FC<CashFlowStatementProps> = ({ transactions, sel
 
   return (
     <>
-      <Button onClick={handleExportClick} variant="outline" className="gap-2">
+      <Button onClick={handleExportClick} variant="ghost" className="gap-2 w-full h-auto p-0 text-white hover:text-white hover:bg-transparent">
         <FileDown className="h-4 w-4" />
-        Export Cash Flow Statement
+        Generate Cash Flow Statement PDF
       </Button>
       
       <ExportOptions 

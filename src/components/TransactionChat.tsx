@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Transaction } from '../services/sms/types';
 import { analyzeTransactionQuery, generateMessageId } from '../utils/transactionChat';
@@ -53,9 +52,10 @@ const TransactionChat: React.FC<TransactionChatProps> = ({ transactions }) => {
       }
     } else if (messages.length === 0) {
       // Add welcome message if no history exists
+      const userName = localStorage.getItem('userName') || 'there';
       const welcomeMessage = {
         id: generateMessageId(),
-        content: "Hey there! I'm Uncle T, your friendly transaction assistant. I can help you analyze your AKAMEME TAX APP data. Try asking questions like 'What's my total income?' or use the FAQ tabs below. Let's make sense of your money together!",
+        content: `Hi ${userName}! I am here to help you analyze your transaction data from AKAMEME TAX APP. I can provide insights about your income, expenses, fees, and much more. Try asking questions like 'What's my total income?' or use the FAQ tabs below. Let's make sense of your money together!`,
         role: 'assistant' as const,
         timestamp: new Date(),
       };

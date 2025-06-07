@@ -9,6 +9,7 @@ import { QuarterInfo } from '../../utils/quarterUtils';
 import PaymentDialog from '../payment/PaymentDialog';
 import ExportOptions from './buttons/ExportOptions';
 import { PaymentProduct, EXPORT_PRODUCTS } from '../../services/MoMoService';
+import CashFlowStatement from './CashFlowStatement';
 
 interface ExportButtonsProps {
   transactions: Transaction[];
@@ -63,6 +64,14 @@ const ExportButtons: React.FC<ExportButtonsProps> = ({ transactions, selectedQua
             selectedQuarter={selectedQuarter}
             className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-2 border-red-700 shadow-lg font-bold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-xl"
           />
+        </div>
+        <div className="w-full">
+          <div className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-2 border-blue-700 shadow-lg font-bold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-xl">
+            <CashFlowStatement 
+              transactions={transactions}
+              selectedQuarter={selectedQuarter}
+            />
+          </div>
         </div>
       </div>
       
