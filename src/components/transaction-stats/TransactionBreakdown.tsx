@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Transaction } from '../../services/SmsReader';
 import { getTotalsByType, getTotalFees, getTotalTaxes } from '../../utils/transactionAnalyzer';
 
@@ -13,17 +13,6 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
   const totalFees = getTotalFees(transactions);
   const totalTaxes = getTotalTaxes(transactions);
   
-  const typeLabels = {
-    send: 'Sent',
-    receive: 'Received',
-    payment: 'Payments',
-    withdrawal: 'Withdrawals',
-    deposit: 'Deposits',
-    other: 'Other',
-    fees: 'Fees',
-    taxes: 'Taxes'
-  };
-
   // Color mapping to match TransactionSummary
   const typeColors = {
     send: '#f97316', // orange
@@ -36,19 +25,48 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     taxes: '#ef4444' // red
   };
   
-  // Combine all data including fees and taxes
-  const allData = {
-    ...totalsByType,
-    fees: totalFees,
-    taxes: totalTaxes
-  };
+  // Group transactions by month for area chart
+  const transactionsByMonth: Record<string, Record<string, number>> = {};
   
-  const chartData = Object.entries(allData)
-    .filter(([_, value]) => value > 0)
-    .map(([type, amount]) => ({
-      name: typeLabels[type as keyof typeof typeLabels],
-      amount: amount,
-      fill: typeColors[type as keyof typeof typeColors]
+  transactions.forEach(transaction => {
+    const date = new Date(transaction.timestamp);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!transactionsByMonth[monthKey]) {
+      transactionsByMonth[monthKey] = {
+        send: 0,
+        receive: 0,
+        payment: 0,
+        withdrawal: 0,
+        deposit: 0,
+        other: 0,
+        fees: 0,
+        taxes: 0
+      };
+    }
+    
+    // Add transaction amount to appropriate category
+    if (transaction.type in transactionsByMonth[monthKey]) {
+      transactionsByMonth[monthKey][transaction.type] += Math.abs(transaction.amount);
+    } else {
+      transactionsByMonth[monthKey].other += Math.abs(transaction.amount);
+    }
+    
+    // Add fees and taxes
+    if (transaction.fee) {
+      transactionsByMonth[monthKey].fees += transaction.fee;
+    }
+    if (transaction.tax) {
+      transactionsByMonth[monthKey].taxes += transaction.tax;
+    }
+  });
+  
+  // Convert to chart data format
+  const chartData = Object.entries(transactionsByMonth)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([month, values]) => ({
+      month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+      ...values
     }));
   
   // Get most common currency
@@ -58,18 +76,23 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
   });
   const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
   
+  // Define the areas to show (only those with data)
+  const areasToShow = Object.keys(typeColors).filter(type => {
+    return chartData.some(data => data[type] > 0);
+  });
+  
   return (
     <div className="neo-chart">
       <h2 className="text-2xl font-bold mb-4">TRANSACTION BREAKDOWN</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 80, bottom: 100 }}>
+      <ResponsiveContainer width="100%" height={400}>
+        <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 80, bottom: 80 }}>
           <XAxis 
-            dataKey="name" 
+            dataKey="month" 
             stroke="#1A1F2C" 
             tick={{ fontSize: 11 }}
             angle={-45}
             textAnchor="end"
-            height={100}
+            height={80}
             interval={0}
           />
           <YAxis 
@@ -86,14 +109,27 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
             }}
             itemStyle={{ color: '#1A1F2C' }}
             labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
-            formatter={(value) => [`${value} ${mainCurrency}`, 'Amount']}
+            formatter={(value) => [`${value} ${mainCurrency}`, '']}
+            labelFormatter={(label) => `Month: ${label}`}
           />
-          <Bar 
-            dataKey="amount" 
-            stroke="#1A1F2C" 
-            strokeWidth={2}
+          <Legend 
+            wrapperStyle={{ paddingTop: '20px' }}
+            iconType="rect"
           />
-        </BarChart>
+          {areasToShow.map((type) => (
+            <Area
+              key={type}
+              type="monotone"
+              dataKey={type}
+              stackId="1"
+              stroke={typeColors[type as keyof typeof typeColors]}
+              fill={typeColors[type as keyof typeof typeColors]}
+              fillOpacity={0.7}
+              strokeWidth={2}
+              name={type.charAt(0).toUpperCase() + type.slice(1)}
+            />
+          ))}
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
