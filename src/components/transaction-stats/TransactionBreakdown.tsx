@@ -1,28 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Transaction } from '../../services/SmsReader';
 import { getTotalsByType, getTotalFees, getTotalTaxes } from '../../utils/transactionAnalyzer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Maximize2 } from 'lucide-react';
 
 interface TransactionBreakdownProps {
   transactions: Transaction[];
 }
 
 const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transactions }) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
   const totalsByType = getTotalsByType(transactions);
   const totalFees = getTotalFees(transactions);
   const totalTaxes = getTotalTaxes(transactions);
   
-  // Color mapping to match TransactionSummary
+  // Enhanced color mapping with more distinct colors
   const typeColors = {
-    send: '#f97316', // orange
-    receive: '#10b981', // emerald
-    payment: '#3b82f6', // blue
-    withdrawal: '#8b5cf6', // purple
-    deposit: '#f59e0b', // amber
-    other: '#6b7280', // gray
-    fees: '#f59e0b', // amber
-    taxes: '#ef4444' // red
+    send: '#FF6B35', // Bright orange
+    receive: '#10B981', // Emerald green
+    payment: '#3B82F6', // Blue
+    withdrawal: '#8B5CF6', // Purple
+    deposit: '#F59E0B', // Amber
+    other: '#6B7280', // Gray
+    fees: '#EC4899', // Pink
+    taxes: '#EF4444' // Red
   };
   
   // Group transactions by month for area chart
@@ -80,32 +84,49 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
   const areasToShow = Object.keys(typeColors).filter(type => {
     return chartData.some(data => data[type] > 0);
   });
-  
-  return (
-    <div className="neo-chart">
-      <h2 className="text-2xl font-bold mb-4">TRANSACTION BREAKDOWN</h2>
-      <ResponsiveContainer width="100%" height={400}>
-        <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 80, bottom: 80 }}>
+
+  const ChartComponent = ({ height = 400, showFullscreenButton = true }) => (
+    <div className="relative">
+      {showFullscreenButton && (
+        <button
+          onClick={() => setIsFullscreen(true)}
+          className="absolute top-2 right-2 z-10 p-2 bg-white border-2 border-neo-black rounded hover:bg-gray-50 md:hidden"
+          title="Expand chart"
+        >
+          <Maximize2 className="h-4 w-4" />
+        </button>
+      )}
+      <ResponsiveContainer width="100%" height={height}>
+        <AreaChart 
+          data={chartData} 
+          margin={{ 
+            top: 20, 
+            right: 30, 
+            left: isFullscreen ? 60 : 40, 
+            bottom: isFullscreen ? 60 : 80 
+          }}
+        >
           <XAxis 
             dataKey="month" 
             stroke="#1A1F2C" 
-            tick={{ fontSize: 11 }}
-            angle={-45}
-            textAnchor="end"
-            height={80}
-            interval={0}
+            tick={{ fontSize: isFullscreen ? 12 : 10 }}
+            angle={isFullscreen ? 0 : -45}
+            textAnchor={isFullscreen ? "middle" : "end"}
+            height={isFullscreen ? 40 : 80}
+            interval={isFullscreen ? 0 : "preserveStartEnd"}
           />
           <YAxis 
             stroke="#1A1F2C" 
-            tick={{ fontSize: 12 }}
-            width={80}
+            tick={{ fontSize: isFullscreen ? 12 : 10 }}
+            width={isFullscreen ? 80 : 60}
             tickFormatter={(value) => `${value.toLocaleString()}`}
           />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: '#FFFFFF', 
               border: '2px solid #1A1F2C',
-              borderRadius: '0px'
+              borderRadius: '0px',
+              fontSize: isFullscreen ? '14px' : '12px'
             }}
             itemStyle={{ color: '#1A1F2C' }}
             labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
@@ -115,6 +136,7 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
           <Legend 
             wrapperStyle={{ paddingTop: '20px' }}
             iconType="rect"
+            fontSize={isFullscreen ? 14 : 12}
           />
           {areasToShow.map((type) => (
             <Area
@@ -132,6 +154,26 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
         </AreaChart>
       </ResponsiveContainer>
     </div>
+  );
+  
+  return (
+    <>
+      <div className="neo-chart">
+        <h2 className="text-2xl font-bold mb-4">TRANSACTION BREAKDOWN</h2>
+        <ChartComponent />
+      </div>
+      
+      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-6">
+          <DialogHeader>
+            <DialogTitle>Transaction Breakdown - Expanded View</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            <ChartComponent height={500} showFullscreenButton={false} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

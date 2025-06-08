@@ -6,9 +6,10 @@ import { getTotalFees, getTotalTaxes } from '../../utils/transactionAnalyzer';
 
 interface TaxesChartProps {
   transactions: Transaction[];
+  hideLegendPointers?: boolean;
 }
 
-const TaxesChart: React.FC<TaxesChartProps> = ({ transactions }) => {
+const TaxesChart: React.FC<TaxesChartProps> = ({ transactions, hideLegendPointers = false }) => {
   const totalFees = getTotalFees(transactions);
   const totalTaxes = getTotalTaxes(transactions);
   
@@ -56,18 +57,20 @@ const TaxesChart: React.FC<TaxesChartProps> = ({ transactions }) => {
               }
               return `${value} ${mainCurrency}`;
             }} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value, entry, index) => {
-                const item = data[index];
-                return (
-                  <span style={{ color: '#1A1F2C', fontWeight: 'bold' }}>
-                    {value} ({item.value.toFixed(2)} {mainCurrency})
-                  </span>
-                );
-              }}
-            />
+            {!hideLegendPointers && (
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                formatter={(value, entry, index) => {
+                  const item = data[index];
+                  return (
+                    <span style={{ color: '#1A1F2C', fontWeight: 'bold' }}>
+                      {value} ({item.value.toFixed(2)} {mainCurrency})
+                    </span>
+                  );
+                }}
+              />
+            )}
           </PieChart>
         </ResponsiveContainer>
       )}
