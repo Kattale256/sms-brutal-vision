@@ -25,13 +25,22 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
   const maxTransactions = Math.max(...transactionCounts);
   const minTransactions = Math.min(...transactionCounts);
   
-  // Non-overlapping positioning algorithm
+  // Enhanced non-overlapping positioning algorithm
   const generateNonOverlappingPositions = (bubbles: any[]) => {
     const positions: { x: number; y: number; radius: number }[] = [];
-    const maxAttempts = 100;
-    const padding = 5; // Minimum distance between bubble edges
+    const maxAttempts = 200;
+    const padding = isMobile ? 3 : 5; // Minimum distance between bubble edges
+    const chartBounds = {
+      minX: 15, // Leave margin from edges
+      maxX: 85,
+      minY: 15,
+      maxY: 85
+    };
     
-    bubbles.forEach((bubble, index) => {
+    // Sort bubbles by size (largest first) for better packing
+    const sortedBubbles = [...bubbles].sort((a, b) => b.radius - a.radius);
+    
+    sortedBubbles.forEach((bubble, index) => {
       let positioned = false;
       let attempts = 0;
       
@@ -39,15 +48,70 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
         let x, y;
         
         if (index === 0) {
-          // Place first bubble in center
+          // Place first (largest) bubble in center
           x = 50;
           y = 50;
+        } else if (index === 1 && positions.length > 0) {
+          // Place second bubble to the right of first
+          const firstBubble = positions[0];
+          x = Math.min(chartBounds.maxX - bubble.radius, 
+               firstBubble.x + firstBubble.radius + bubble.radius + padding);
+          y = firstBubble.y;
+        } else if (index === 2 && positions.length > 1) {
+          // Place third bubble to the left of first
+          const firstBubble = positions[0];
+          x = Math.max(chartBounds.minX + bubble.radius, 
+               firstBubble.x - firstBubble.radius - bubble.radius - padding);
+          y = firstBubble.y;
         } else {
-          // Generate random position within bounds
-          const margin = bubble.radius + 10;
-          x = margin + Math.random() * (100 - 2 * margin);
-          y = margin + Math.random() * (100 - 2 * margin);
+          // For remaining bubbles, try different strategies
+          if (attempts < 50) {
+            // Strategy 1: Random placement within safe bounds
+            const safeMargin = bubble.radius + padding;
+            x = safeMargin + Math.random() * (100 - 2 * safeMargin);
+            y = safeMargin + Math.random() * (100 - 2 * safeMargin);
+          } else if (attempts < 100) {
+            // Strategy 2: Try placing around existing bubbles
+            if (positions.length > 0) {
+              const randomExisting = positions[Math.floor(Math.random() * positions.length)];
+              const angle = Math.random() * 2 * Math.PI;
+              const distance = randomExisting.radius + bubble.radius + padding + 5;
+              x = randomExisting.x + Math.cos(angle) * distance;
+              y = randomExisting.y + Math.sin(angle) * distance;
+              
+              // Clamp to bounds
+              x = Math.max(chartBounds.minX + bubble.radius, 
+                  Math.min(chartBounds.maxX - bubble.radius, x));
+              y = Math.max(chartBounds.minY + bubble.radius, 
+                  Math.min(chartBounds.maxY - bubble.radius, y));
+            } else {
+              x = 50;
+              y = 50;
+            }
+          } else {
+            // Strategy 3: Grid-based fallback
+            const gridSize = Math.ceil(Math.sqrt(bubbles.length));
+            const cellWidth = (chartBounds.maxX - chartBounds.minX) / gridSize;
+            const cellHeight = (chartBounds.maxY - chartBounds.minY) / gridSize;
+            const gridX = (index - 1) % gridSize;
+            const gridY = Math.floor((index - 1) / gridSize);
+            
+            x = chartBounds.minX + gridX * cellWidth + cellWidth / 2;
+            y = chartBounds.minY + gridY * cellHeight + cellHeight / 2;
+            
+            // Ensure bubble fits within cell
+            x = Math.max(chartBounds.minX + bubble.radius, 
+                Math.min(chartBounds.maxX - bubble.radius, x));
+            y = Math.max(chartBounds.minY + bubble.radius, 
+                Math.min(chartBounds.maxY - bubble.radius, y));
+          }
         }
+        
+        // Ensure bubble stays within chart bounds
+        x = Math.max(chartBounds.minX + bubble.radius, 
+            Math.min(chartBounds.maxX - bubble.radius, x));
+        y = Math.max(chartBounds.minY + bubble.radius, 
+            Math.min(chartBounds.maxY - bubble.radius, y));
         
         // Check for overlaps with existing bubbles
         let hasOverlap = false;
@@ -71,15 +135,21 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
         attempts++;
       }
       
-      // If we couldn't find a non-overlapping position, use a fallback grid position
+      // Final fallback: place at a safe location even if not optimal
       if (!positioned) {
-        const gridSize = Math.ceil(Math.sqrt(bubbles.length));
-        const gridX = (index % gridSize) * (100 / gridSize) + (50 / gridSize);
-        const gridY = Math.floor(index / gridSize) * (100 / gridSize) + (50 / gridSize);
+        console.warn(`Could not find optimal position for bubble ${index}, using fallback`);
+        let fallbackX = 20 + (index * 15) % 60;
+        let fallbackY = 20 + Math.floor(index / 4) * 20;
         
-        bubble.x = Math.max(bubble.radius, Math.min(100 - bubble.radius, gridX));
-        bubble.y = Math.max(bubble.radius, Math.min(100 - bubble.radius, gridY));
-        positions.push({ x: bubble.x, y: bubble.y, radius: bubble.radius });
+        // Ensure fallback position is within bounds
+        fallbackX = Math.max(chartBounds.minX + bubble.radius, 
+                    Math.min(chartBounds.maxX - bubble.radius, fallbackX));
+        fallbackY = Math.max(chartBounds.minY + bubble.radius, 
+                    Math.min(chartBounds.maxY - bubble.radius, fallbackY));
+        
+        bubble.x = fallbackX;
+        bubble.y = fallbackY;
+        positions.push({ x: fallbackX, y: fallbackY, radius: bubble.radius });
       }
     });
     
@@ -87,17 +157,18 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
   };
   
   const bubbleData = contactEntries.map(([name, count], index) => {
-    // Calculate bubble size with much more pronounced scaling
-    const baseSize = isMobile ? 8 : 12;
-    const maxSize = isMobile ? 45 : 60;
+    // Calculate bubble size with better scaling for different screen sizes
+    const baseSize = isMobile ? 6 : 8;
+    const maxSize = isMobile ? 25 : 35; // Reduced max size to prevent overcrowding
     
     let bubbleSize;
     if (maxTransactions === minTransactions) {
       bubbleSize = (baseSize + maxSize) / 2;
     } else {
-      // Use linear scaling for more dramatic size differences
+      // Use exponential scaling for more dramatic differences
       const ratio = (count - minTransactions) / (maxTransactions - minTransactions);
-      bubbleSize = baseSize + (ratio * (maxSize - baseSize));
+      const scaledRatio = Math.pow(ratio, 0.7); // Soften the curve
+      bubbleSize = baseSize + (scaledRatio * (maxSize - baseSize));
     }
     
     return {
@@ -111,7 +182,7 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
     };
   });
 
-  // Apply non-overlapping positioning
+  // Apply enhanced positioning algorithm
   const positionedBubbles = generateNonOverlappingPositions(bubbleData);
 
   const handleBubbleClick = (data: any) => {
