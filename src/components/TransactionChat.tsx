@@ -177,7 +177,7 @@ const TransactionChat: React.FC<TransactionChatProps> = ({
       });
     }
   };
-  return <div ref={setNodeRef} style={style} className="neo-card relative flex flex-col h-[800px] sm:h-[900px]">
+  return <div ref={setNodeRef} style={style} className="neo-card relative flex flex-col h-[560px] sm:h-[630px]">
       <div className="absolute top-2 right-2 cursor-move" {...attributes} {...listeners}>
         <Handle />
       </div>
