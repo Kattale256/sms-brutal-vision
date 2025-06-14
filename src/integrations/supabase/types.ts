@@ -60,6 +60,105 @@ export type Database = {
         }
         Relationships: []
       }
+      user_whatsapp_registrations: {
+        Row: {
+          created_at: string
+          id: string
+          phone_number: string
+          updated_at: string
+          user_id: string
+          verification_code: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          phone_number: string
+          updated_at?: string
+          user_id: string
+          verification_code?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          phone_number?: string
+          updated_at?: string
+          user_id?: string
+          verification_code?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_content: string
+          message_type: string
+          phone_number: string
+          processed: boolean | null
+          timestamp: string
+          updated_at: string
+          user_id: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_content: string
+          message_type?: string
+          phone_number: string
+          processed?: boolean | null
+          timestamp?: string
+          updated_at?: string
+          user_id: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_content?: string
+          message_type?: string
+          phone_number?: string
+          processed?: boolean | null
+          timestamp?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_webhooks: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          phone_number: string | null
+          processed: boolean | null
+          raw_payload: Json
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          phone_number?: string | null
+          processed?: boolean | null
+          raw_payload: Json
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          phone_number?: string | null
+          processed?: boolean | null
+          raw_payload?: Json
+          webhook_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
