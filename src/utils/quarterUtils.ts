@@ -102,9 +102,9 @@ export const filterTransactionsByQuarter = (
   quarter: number, 
   financialYear: string
 ): Transaction[] => {
-  console.log(`Filtering transactions for Q${quarter} ${financialYear}`);
+  console.log(`=== Filtering Transactions for Q${quarter} ${financialYear} ===`);
   
-  return transactions.filter(transaction => {
+  const filtered = transactions.filter(transaction => {
     const transactionDate = new Date(transaction.timestamp);
     
     // Handle invalid dates
@@ -116,25 +116,43 @@ export const filterTransactionsByQuarter = (
     const quarterInfo = getQuarterInfo(transactionDate);
     const matches = quarterInfo.quarter === quarter && quarterInfo.financialYear === financialYear;
     
-    // Enhanced debug logging
-    console.log(`Transaction ${transaction.timestamp}: Q${quarterInfo.quarter} ${quarterInfo.financialYear}, target Q${quarter} ${financialYear}, matches: ${matches}`);
+    // Less verbose logging - only log mismatches for debugging
+    if (!matches) {
+      console.log(`Excluded: ${transaction.timestamp} (Q${quarterInfo.quarter} ${quarterInfo.financialYear})`);
+    }
     
     return matches;
   });
+  
+  console.log(`Filter result: ${filtered.length}/${transactions.length} transactions match Q${quarter} ${financialYear}`);
+  
+  return filtered;
 };
 
-// New helper function to check if a date falls within a specific quarter
+// Helper function to check if a date falls within a specific quarter
 export const isDateInQuarter = (date: Date, quarter: number, financialYear: string): boolean => {
   const quarterInfo = getQuarterInfo(date);
   return quarterInfo.quarter === quarter && quarterInfo.financialYear === financialYear;
 };
 
-// Enhanced validation function
+// Enhanced validation function with better logging
 export const validateQuarterData = (transactions: Transaction[], quarter: number, financialYear: string) => {
   const filtered = filterTransactionsByQuarter(transactions, quarter, financialYear);
-  console.log(`Quarter validation for Q${quarter} ${financialYear}:`);
+  console.log(`=== Quarter Validation for Q${quarter} ${financialYear} ===`);
   console.log(`- Total transactions: ${transactions.length}`);
   console.log(`- Filtered transactions: ${filtered.length}`);
-  console.log(`- Sample filtered dates:`, filtered.slice(0, 5).map(t => t.timestamp));
+  
+  if (filtered.length > 0) {
+    const sampleDates = filtered.slice(0, 3).map(t => {
+      const date = new Date(t.timestamp);
+      return {
+        timestamp: t.timestamp,
+        formatted: date.toLocaleDateString(),
+        quarter: getQuarterInfo(date).label
+      };
+    });
+    console.log(`- Sample filtered dates:`, sampleDates);
+  }
+  
   return filtered;
 };

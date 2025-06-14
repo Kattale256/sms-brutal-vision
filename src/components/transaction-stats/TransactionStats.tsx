@@ -18,48 +18,55 @@ interface TransactionStatsProps {
 const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => {
   const [selectedQuarter, setSelectedQuarter] = useState<QuarterInfo | null>(null);
   
-  // Filter transactions based on selected quarter
-  const filteredTransactions = selectedQuarter 
-    ? filterTransactionsByQuarter(
-        transactions, 
-        selectedQuarter.quarter, 
-        selectedQuarter.financialYear
-      )
-    : transactions;
+  // Filter transactions based on selected quarter with better handling
+  const filteredTransactions = React.useMemo(() => {
+    if (!selectedQuarter) {
+      console.log('=== All Time Selected - No Filtering ===');
+      console.log('Showing all transactions:', transactions.length);
+      return transactions;
+    }
+    
+    console.log('=== Quarter Filtering ===');
+    console.log(`Filtering for Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`);
+    
+    const filtered = filterTransactionsByQuarter(
+      transactions, 
+      selectedQuarter.quarter, 
+      selectedQuarter.financialYear
+    );
+    
+    console.log(`Filtered result: ${filtered.length} transactions`);
+    return filtered;
+  }, [transactions, selectedQuarter]);
 
-  // Enhanced debug logging with validation
+  // Enhanced debug logging
   useEffect(() => {
-    console.log('=== TransactionStats Debug ===');
+    console.log('=== TransactionStats State Update ===');
     console.log('Selected quarter:', selectedQuarter);
     console.log('Total transactions:', transactions.length);
     console.log('Filtered transactions:', filteredTransactions.length);
     
     if (selectedQuarter) {
-      console.log(`Showing Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`);
-      // Use validation function for better debugging
+      console.log(`Currently showing: Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`);
+      // Validate the filtering
       validateQuarterData(transactions, selectedQuarter.quarter, selectedQuarter.financialYear);
     } else {
-      console.log('Showing All Time - no filtering applied');
+      console.log('Currently showing: All Time (no filtering)');
     }
-    
-    // Log sample transaction dates for verification
-    console.log('Sample transaction dates:', transactions.slice(0, 5).map(t => ({
-      timestamp: t.timestamp,
-      date: new Date(t.timestamp).toISOString(),
-      amount: t.amount
-    })));
-    
-    console.log('Sample filtered transaction dates:', filteredTransactions.slice(0, 5).map(t => ({
-      timestamp: t.timestamp,
-      date: new Date(t.timestamp).toISOString(),
-      amount: t.amount
-    })));
   }, [selectedQuarter, transactions, filteredTransactions]);
 
-  // Handle quarter change with additional logging
+  // Handle quarter change with improved state management
   const handleQuarterChange = (quarter: QuarterInfo | null) => {
-    console.log('Quarter change requested:', quarter);
+    console.log('=== Quarter Change Handler ===');
+    console.log('Previous quarter:', selectedQuarter);
+    console.log('New quarter:', quarter);
+    
     setSelectedQuarter(quarter);
+    
+    // Force a re-render by logging the change
+    setTimeout(() => {
+      console.log('Quarter change completed. Current state:', quarter);
+    }, 100);
   };
 
   return (
