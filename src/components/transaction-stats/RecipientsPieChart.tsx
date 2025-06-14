@@ -25,48 +25,94 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
   const maxTransactions = Math.max(...transactionCounts);
   const minTransactions = Math.min(...transactionCounts);
   
-  // Generate positions in a more distributed way
-  const generatePosition = (index: number, total: number) => {
-    if (total === 1) return { x: 50, y: 50 };
+  // Non-overlapping positioning algorithm
+  const generateNonOverlappingPositions = (bubbles: any[]) => {
+    const positions: { x: number; y: number; radius: number }[] = [];
+    const maxAttempts = 100;
+    const padding = 5; // Minimum distance between bubble edges
     
-    // Create a spiral pattern for better distribution
-    const angle = (index / total) * 2 * Math.PI + (index * 2.4);
-    const radius = 20 + (index % 3) * 15;
-    const x = 50 + radius * Math.cos(angle);
-    const y = 50 + radius * Math.sin(angle);
+    bubbles.forEach((bubble, index) => {
+      let positioned = false;
+      let attempts = 0;
+      
+      while (!positioned && attempts < maxAttempts) {
+        let x, y;
+        
+        if (index === 0) {
+          // Place first bubble in center
+          x = 50;
+          y = 50;
+        } else {
+          // Generate random position within bounds
+          const margin = bubble.radius + 10;
+          x = margin + Math.random() * (100 - 2 * margin);
+          y = margin + Math.random() * (100 - 2 * margin);
+        }
+        
+        // Check for overlaps with existing bubbles
+        let hasOverlap = false;
+        for (const existing of positions) {
+          const distance = Math.sqrt(Math.pow(x - existing.x, 2) + Math.pow(y - existing.y, 2));
+          const minDistance = bubble.radius + existing.radius + padding;
+          
+          if (distance < minDistance) {
+            hasOverlap = true;
+            break;
+          }
+        }
+        
+        if (!hasOverlap) {
+          positions.push({ x, y, radius: bubble.radius });
+          bubble.x = x;
+          bubble.y = y;
+          positioned = true;
+        }
+        
+        attempts++;
+      }
+      
+      // If we couldn't find a non-overlapping position, use a fallback grid position
+      if (!positioned) {
+        const gridSize = Math.ceil(Math.sqrt(bubbles.length));
+        const gridX = (index % gridSize) * (100 / gridSize) + (50 / gridSize);
+        const gridY = Math.floor(index / gridSize) * (100 / gridSize) + (50 / gridSize);
+        
+        bubble.x = Math.max(bubble.radius, Math.min(100 - bubble.radius, gridX));
+        bubble.y = Math.max(bubble.radius, Math.min(100 - bubble.radius, gridY));
+        positions.push({ x: bubble.x, y: bubble.y, radius: bubble.radius });
+      }
+    });
     
-    // Ensure bubbles stay within bounds
-    return {
-      x: Math.max(15, Math.min(85, x)),
-      y: Math.max(15, Math.min(85, y))
-    };
+    return bubbles;
   };
   
   const bubbleData = contactEntries.map(([name, count], index) => {
-    // Calculate bubble size with better scaling
-    const baseSize = isMobile ? 15 : 20;
-    const maxSize = isMobile ? 60 : 80;
+    // Calculate bubble size with much more pronounced scaling
+    const baseSize = isMobile ? 8 : 12;
+    const maxSize = isMobile ? 45 : 60;
     
     let bubbleSize;
     if (maxTransactions === minTransactions) {
       bubbleSize = (baseSize + maxSize) / 2;
     } else {
-      // Use square root scaling for better visual proportion
-      const ratio = Math.sqrt((count - minTransactions) / (maxTransactions - minTransactions));
+      // Use linear scaling for more dramatic size differences
+      const ratio = (count - minTransactions) / (maxTransactions - minTransactions);
       bubbleSize = baseSize + (ratio * (maxSize - baseSize));
     }
-    
-    const position = generatePosition(index, contactEntries.length);
     
     return {
       name: name || 'Unknown',
       value: count,
       size: bubbleSize,
+      radius: bubbleSize / 2,
       color: COLORS[index % COLORS.length],
-      x: position.x,
-      y: position.y
+      x: 0, // Will be set by positioning algorithm
+      y: 0  // Will be set by positioning algorithm
     };
   });
+
+  // Apply non-overlapping positioning
+  const positionedBubbles = generateNonOverlappingPositions(bubbleData);
 
   const handleBubbleClick = (data: any) => {
     setSelectedBubble(data);
@@ -94,7 +140,7 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
       <circle
         cx={cx}
         cy={cy}
-        r={payload.size / 2}
+        r={payload.radius}
         fill={payload.color}
         stroke="#1A1F2C"
         strokeWidth={isMobile ? 1 : 2}
@@ -107,14 +153,14 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
   return (
     <div className="neo-chart">
       <h2 className="text-lg sm:text-2xl font-bold mb-2 sm:mb-4">RECIPIENTS BUBBLE CHART</h2>
-      {bubbleData.length > 0 ? (
-        <div className="h-[250px] sm:h-[300px] w-full">
+      {positionedBubbles.length > 0 ? (
+        <div className="h-[280px] sm:h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ 
-              top: isMobile ? 10 : 20, 
-              right: isMobile ? 10 : 20, 
-              bottom: isMobile ? 10 : 20, 
-              left: isMobile ? 10 : 20 
+              top: isMobile ? 20 : 30, 
+              right: isMobile ? 20 : 30, 
+              bottom: isMobile ? 20 : 30, 
+              left: isMobile ? 20 : 30 
             }}>
               <XAxis 
                 type="number" 
@@ -130,7 +176,7 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
               />
               <Tooltip content={<CustomTooltip />} />
               <Scatter 
-                data={bubbleData} 
+                data={positionedBubbles} 
                 fill="#8884d8"
                 shape={<CustomDot />}
               />
@@ -138,7 +184,7 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-[250px] sm:h-[300px] flex items-center justify-center text-neo-gray text-sm">
+        <div className="h-[280px] sm:h-[350px] flex items-center justify-center text-neo-gray text-sm">
           No recipient data available
         </div>
       )}
