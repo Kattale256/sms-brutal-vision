@@ -6,3 +6,6 @@ export * from './exportFreeCashFlowToPDF';
 export * from './prepareChartData';
 export * from './exportFreeToExcel';
 export * from './exportFreeToPDF';
+export * from './pdfChartGenerator';
+export * from './pdfDocumentBuilder';
+export * from './pdfMetadata';
