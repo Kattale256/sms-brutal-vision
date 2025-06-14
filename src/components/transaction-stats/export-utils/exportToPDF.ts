@@ -3,11 +3,11 @@ import { Transaction } from '../../../services/SmsReader';
 import { QuarterInfo } from '../../../utils/quarterUtils';
 import { toast } from 'sonner';
 import {
-  prepareChartData,
   createTransactionBreakdownChart,
   createRecipientsAreaChart,
   createFeeTaxPieChart
 } from './pdfChartGenerator';
+import { prepareChartData } from './prepareChartData';
 import {
   getPDFMetadata,
   generatePDFFilename,
@@ -33,10 +33,16 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     const mainCurrency = getMainCurrency(transactions);
     
     // Prepare chart data
-    const { chartData, feeTaxData, recipientsData, totalsByType, totalFees, totalTaxes } = 
+    const { chartData, recipientsData, feesChartData, totalsByType, totalTaxes } = 
       prepareChartData(transactions);
     
-    console.log('Chart data prepared:', { chartData, feeTaxData, recipientsData });
+    console.log('Chart data prepared:', { chartData, recipientsData, feesChartData });
+    
+    // Create fee/tax data for pie chart
+    const feeTaxData = [];
+    const totalFees = feesChartData.reduce((sum, item) => sum + item.fees, 0);
+    if (totalFees > 0) feeTaxData.push({ name: 'Fees', value: totalFees });
+    if (totalTaxes > 0) feeTaxData.push({ name: 'Taxes', value: totalTaxes });
     
     // Create PDF document
     const doc = createPDFDocument();
