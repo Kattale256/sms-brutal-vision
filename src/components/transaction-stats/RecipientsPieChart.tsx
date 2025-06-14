@@ -19,32 +19,52 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
   
   const frequentContacts = getFrequentContacts(transactions);
   
-  // Calculate bubble sizes with better scaling
-  const contactEntries = Object.entries(frequentContacts).slice(0, 8);
-  const maxTransactions = Math.max(...contactEntries.map(([, count]) => count));
-  const minTransactions = Math.min(...contactEntries.map(([, count]) => count));
+  // Calculate bubble sizes with proper scaling
+  const contactEntries = Object.entries(frequentContacts).slice(0, 9);
+  const transactionCounts = contactEntries.map(([, count]) => count);
+  const maxTransactions = Math.max(...transactionCounts);
+  const minTransactions = Math.min(...transactionCounts);
+  
+  // Generate positions in a more distributed way
+  const generatePosition = (index: number, total: number) => {
+    if (total === 1) return { x: 50, y: 50 };
+    
+    // Create a spiral pattern for better distribution
+    const angle = (index / total) * 2 * Math.PI + (index * 2.4);
+    const radius = 20 + (index % 3) * 15;
+    const x = 50 + radius * Math.cos(angle);
+    const y = 50 + radius * Math.sin(angle);
+    
+    // Ensure bubbles stay within bounds
+    return {
+      x: Math.max(15, Math.min(85, x)),
+      y: Math.max(15, Math.min(85, y))
+    };
+  };
   
   const bubbleData = contactEntries.map(([name, count], index) => {
-    // Calculate relative bubble size (30-120 range for better visibility)
-    const sizeRange = isMobile ? 80 : 100; // Smaller max size on mobile
-    const minSize = isMobile ? 25 : 30;
-    const maxSize = minSize + sizeRange;
+    // Calculate bubble size with better scaling
+    const baseSize = isMobile ? 15 : 20;
+    const maxSize = isMobile ? 60 : 80;
     
     let bubbleSize;
     if (maxTransactions === minTransactions) {
-      bubbleSize = (minSize + maxSize) / 2;
+      bubbleSize = (baseSize + maxSize) / 2;
     } else {
-      const ratio = (count - minTransactions) / (maxTransactions - minTransactions);
-      bubbleSize = minSize + (ratio * sizeRange);
+      // Use square root scaling for better visual proportion
+      const ratio = Math.sqrt((count - minTransactions) / (maxTransactions - minTransactions));
+      bubbleSize = baseSize + (ratio * (maxSize - baseSize));
     }
+    
+    const position = generatePosition(index, contactEntries.length);
     
     return {
       name: name || 'Unknown',
       value: count,
       size: bubbleSize,
       color: COLORS[index % COLORS.length],
-      x: Math.random() * 70 + 15, // Better spread
-      y: Math.random() * 70 + 15
+      x: position.x,
+      y: position.y
     };
   });
 
@@ -60,10 +80,28 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
         <div className="bg-white border-2 border-neo-black p-2 rounded shadow-neo text-xs sm:text-sm">
           <p className="font-bold">{data.name}</p>
           <p>{data.value} transactions</p>
+          <p className="text-xs text-gray-500">Click to view details</p>
         </div>
       );
     }
     return null;
+  };
+
+  // Custom dot component to render bubbles with proper sizing
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={payload.size / 2}
+        fill={payload.color}
+        stroke="#1A1F2C"
+        strokeWidth={isMobile ? 1 : 2}
+        style={{ cursor: 'pointer' }}
+        onClick={() => handleBubbleClick(payload)}
+      />
+    );
   };
     
   return (
@@ -94,18 +132,8 @@ const RecipientsPieChart: React.FC<RecipientsPieChartProps> = ({ transactions })
               <Scatter 
                 data={bubbleData} 
                 fill="#8884d8"
-                onClick={handleBubbleClick}
-                style={{ cursor: 'pointer' }}
-              >
-                {bubbleData.map((entry, index) => (
-                  <Cell 
-                    key={`bubble-${index}`} 
-                    fill={entry.color}
-                    stroke="#1A1F2C" 
-                    strokeWidth={isMobile ? 1 : 2}
-                  />
-                ))}
-              </Scatter>
+                shape={<CustomDot />}
+              />
             </ScatterChart>
           </ResponsiveContainer>
         </div>

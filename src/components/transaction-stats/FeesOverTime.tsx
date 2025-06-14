@@ -16,8 +16,9 @@ const FeesOverTime: React.FC<FeesOverTimeProps> = ({ transactions }) => {
   const feesChartData = Object.entries(feesByDate).map(([date, amount]) => ({
     date: new Date(date).toLocaleDateString('en-US', { 
       month: 'short', 
-      day: isMobile ? 'numeric' : 'numeric'
+      day: 'numeric'
     }),
+    fullDate: date,
     fees: amount
   }));
   
@@ -31,41 +32,56 @@ const FeesOverTime: React.FC<FeesOverTimeProps> = ({ transactions }) => {
   return (
     <div className="neo-chart">
       <h2 className="text-lg sm:text-2xl font-bold mb-2 sm:mb-4">FEES OVER TIME</h2>
-      <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+      <ResponsiveContainer width="100%" height={isMobile ? 280 : 300}>
         <BarChart 
           data={feesChartData} 
           margin={{ 
             top: isMobile ? 10 : 20, 
-            right: isMobile ? 15 : 30, 
-            left: isMobile ? 0 : 0, 
-            bottom: isMobile ? 40 : 5 
+            right: isMobile ? 10 : 30, 
+            left: isMobile ? 5 : 20, 
+            bottom: isMobile ? 60 : 20 
           }}
         >
           <XAxis 
             dataKey="date" 
             stroke="#1A1F2C" 
-            tick={{ fontSize: isMobile ? 10 : 12 }}
+            tick={{ fontSize: isMobile ? 9 : 12 }}
             angle={isMobile ? -45 : 0}
             textAnchor={isMobile ? "end" : "middle"}
-            height={isMobile ? 60 : 30}
-            interval={isMobile ? "preserveStartEnd" : 0}
+            height={isMobile ? 80 : 60}
+            interval={isMobile ? Math.max(0, Math.floor(feesChartData.length / 4)) : 0}
+            axisLine={{ stroke: '#1A1F2C', strokeWidth: 1 }}
+            tickLine={{ stroke: '#1A1F2C', strokeWidth: 1 }}
           />
           <YAxis 
             stroke="#1A1F2C" 
-            tick={{ fontSize: isMobile ? 10 : 12 }}
-            width={isMobile ? 40 : 60}
-            tickFormatter={(value) => isMobile ? `${value}` : value.toLocaleString()}
+            tick={{ fontSize: isMobile ? 9 : 12 }}
+            width={isMobile ? 35 : 60}
+            tickFormatter={(value) => isMobile ? `${Math.round(value)}` : value.toLocaleString()}
+            axisLine={{ stroke: '#1A1F2C', strokeWidth: 1 }}
+            tickLine={{ stroke: '#1A1F2C', strokeWidth: 1 }}
           />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: '#FFFFFF', 
               border: '2px solid #1A1F2C',
-              borderRadius: '0px',
-              fontSize: isMobile ? '12px' : '14px'
+              borderRadius: '4px',
+              fontSize: isMobile ? '11px' : '14px',
+              padding: isMobile ? '6px' : '8px'
             }}
-            itemStyle={{ color: '#1A1F2C' }}
-            labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
+            itemStyle={{ color: '#1A1F2C', fontSize: isMobile ? '11px' : '14px' }}
+            labelStyle={{ color: '#1A1F2C', fontWeight: 'bold', fontSize: isMobile ? '11px' : '14px' }}
             formatter={(value) => [`${value} ${mainCurrency}`, 'Fees']}
+            labelFormatter={(label, payload) => {
+              if (payload && payload[0] && payload[0].payload) {
+                return new Date(payload[0].payload.fullDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                });
+              }
+              return label;
+            }}
           />
           <Bar dataKey="fees" fill="#FFC107" stroke="#1A1F2C" strokeWidth={isMobile ? 1 : 2} />
         </BarChart>
