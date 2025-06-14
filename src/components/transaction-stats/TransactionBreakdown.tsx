@@ -87,6 +87,41 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     return chartData.some(data => data[type] > 0);
   });
 
+  // Custom tooltip content with color indicators
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const fullDate = payload[0]?.payload?.fullDate;
+      const formattedDate = fullDate ? 
+        new Date(fullDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : `Date: ${label}`;
+
+      return (
+        <div className="bg-white border-2 border-neo-black p-3 rounded shadow-neo text-sm">
+          <p className="font-bold mb-2 text-neo-black">{formattedDate}</p>
+          <div className="space-y-1">
+            {payload
+              .filter((entry: any) => entry.value > 0)
+              .map((entry: any, index: number) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-sm border border-neo-black"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-neo-black">
+                    {entry.name}: {entry.value} {mainCurrency}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const ChartComponent = ({ height = 400, showFullscreenButton = true }) => (
     <div className="relative">
       {showFullscreenButton && (
@@ -123,27 +158,7 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
             width={isFullscreen ? 80 : 60}
             tickFormatter={(value) => `${value.toLocaleString()}`}
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#FFFFFF', 
-              border: '2px solid #1A1F2C',
-              borderRadius: '0px',
-              fontSize: isFullscreen ? '14px' : '12px'
-            }}
-            itemStyle={{ color: '#1A1F2C' }}
-            labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
-            formatter={(value) => [`${value} ${mainCurrency}`, '']}
-            labelFormatter={(label, payload) => {
-              if (payload && payload[0] && payload[0].payload) {
-                return new Date(payload[0].payload.fullDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                });
-              }
-              return `Date: ${label}`;
-            }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend 
             wrapperStyle={{ paddingTop: '20px' }}
             iconType="rect"
