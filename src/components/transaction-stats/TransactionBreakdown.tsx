@@ -13,6 +13,7 @@ interface TransactionBreakdownProps {
 const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transactions }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   
+  // Use only the filtered transactions passed as props
   const totalsByType = getTotalsByType(transactions);
   const totalFees = getTotalFees(transactions);
   const totalTaxes = getTotalTaxes(transactions);
@@ -29,15 +30,15 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     taxes: '#EF4444' // Red
   };
   
-  // Group transactions by month for area chart
-  const transactionsByMonth: Record<string, Record<string, number>> = {};
+  // Group transactions by date (daily granularity for better quarter visibility)
+  const transactionsByDate: Record<string, Record<string, number>> = {};
   
   transactions.forEach(transaction => {
     const date = new Date(transaction.timestamp);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     
-    if (!transactionsByMonth[monthKey]) {
-      transactionsByMonth[monthKey] = {
+    if (!transactionsByDate[dateKey]) {
+      transactionsByDate[dateKey] = {
         send: 0,
         receive: 0,
         payment: 0,
@@ -50,26 +51,27 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
     }
     
     // Add transaction amount to appropriate category
-    if (transaction.type in transactionsByMonth[monthKey]) {
-      transactionsByMonth[monthKey][transaction.type] += Math.abs(transaction.amount);
+    if (transaction.type in transactionsByDate[dateKey]) {
+      transactionsByDate[dateKey][transaction.type] += Math.abs(transaction.amount);
     } else {
-      transactionsByMonth[monthKey].other += Math.abs(transaction.amount);
+      transactionsByDate[dateKey].other += Math.abs(transaction.amount);
     }
     
     // Add fees and taxes
     if (transaction.fee) {
-      transactionsByMonth[monthKey].fees += transaction.fee;
+      transactionsByDate[dateKey].fees += transaction.fee;
     }
     if (transaction.tax) {
-      transactionsByMonth[monthKey].taxes += transaction.tax;
+      transactionsByDate[dateKey].taxes += transaction.tax;
     }
   });
   
-  // Convert to chart data format
-  const chartData = Object.entries(transactionsByMonth)
+  // Convert to chart data format and sort by date
+  const chartData = Object.entries(transactionsByDate)
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([month, values]) => ({
-      month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+    .map(([date, values]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      fullDate: date,
       ...values
     }));
   
@@ -107,13 +109,13 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
           }}
         >
           <XAxis 
-            dataKey="month" 
+            dataKey="date" 
             stroke="#1A1F2C" 
             tick={{ fontSize: isFullscreen ? 12 : 10 }}
             angle={isFullscreen ? 0 : -45}
             textAnchor={isFullscreen ? "middle" : "end"}
             height={isFullscreen ? 40 : 80}
-            interval={isFullscreen ? 0 : "preserveStartEnd"}
+            interval={isFullscreen ? "preserveStartEnd" : Math.max(0, Math.floor(chartData.length / 8))}
           />
           <YAxis 
             stroke="#1A1F2C" 
@@ -131,7 +133,16 @@ const TransactionBreakdown: React.FC<TransactionBreakdownProps> = ({ transaction
             itemStyle={{ color: '#1A1F2C' }}
             labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
             formatter={(value) => [`${value} ${mainCurrency}`, '']}
-            labelFormatter={(label) => `Month: ${label}`}
+            labelFormatter={(label, payload) => {
+              if (payload && payload[0] && payload[0].payload) {
+                return new Date(payload[0].payload.fullDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                });
+              }
+              return `Date: ${label}`;
+            }}
           />
           <Legend 
             wrapperStyle={{ paddingTop: '20px' }}

@@ -35,6 +35,11 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
     
     if (selectedQuarter) {
       console.log(`Showing Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`);
+      console.log('Sample filtered transactions:', filteredTransactions.slice(0, 3).map(t => ({
+        timestamp: t.timestamp,
+        amount: t.amount,
+        quarter: `Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`
+      })));
     } else {
       console.log('Showing All Time');
     }

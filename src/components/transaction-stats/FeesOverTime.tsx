@@ -2,7 +2,6 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Transaction } from '../../services/SmsReader';
-import { getFeesByDate } from '../../utils/transactionAnalyzer';
 import { useIsMobile } from '../../hooks/use-mobile';
 
 interface FeesOverTimeProps {
@@ -11,16 +10,32 @@ interface FeesOverTimeProps {
 
 const FeesOverTime: React.FC<FeesOverTimeProps> = ({ transactions }) => {
   const isMobile = useIsMobile();
-  const feesByDate = getFeesByDate(transactions);
   
-  const feesChartData = Object.entries(feesByDate).map(([date, amount]) => ({
-    date: new Date(date).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric'
-    }),
-    fullDate: date,
-    fees: amount
-  }));
+  // Group fees by date (daily granularity for better quarter visibility)
+  const feesByDate: Record<string, number> = {};
+  
+  transactions.forEach(transaction => {
+    if (transaction.fee && transaction.fee > 0) {
+      const date = new Date(transaction.timestamp);
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      if (!feesByDate[dateKey]) {
+        feesByDate[dateKey] = 0;
+      }
+      feesByDate[dateKey] += transaction.fee;
+    }
+  });
+  
+  const feesChartData = Object.entries(feesByDate)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, amount]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
+      }),
+      fullDate: date,
+      fees: amount
+    }));
   
   // Get most common currency
   const currencyMap: Record<string, number> = {};

@@ -2,7 +2,6 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Transaction } from '../services/SmsReader';
-import { getTransactionsByDate } from '../utils/transactionAnalyzer';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Handle } from './ui/dnd-handle';
@@ -12,13 +11,26 @@ interface TransactionTimelineProps {
 }
 
 const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ transactions }) => {
-  // Display only transactions per day
-  const transactionsByDate = getTransactionsByDate(transactions);
+  // Group transactions by date (daily granularity)
+  const transactionsByDate: Record<string, number> = {};
+  
+  transactions.forEach(transaction => {
+    const date = new Date(transaction.timestamp);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
+    if (!transactionsByDate[dateKey]) {
+      transactionsByDate[dateKey] = 0;
+    }
+    transactionsByDate[dateKey] += 1;
+  });
 
-  const activityData = Object.entries(transactionsByDate).map(([date, count]) => ({
-    date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    count
-  }));
+  const activityData = Object.entries(transactionsByDate)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, count]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      fullDate: date,
+      count
+    }));
 
   // Get the most frequent currency for display (if desired in tooltip)
   const currencyMap: Record<string, number> = {};
@@ -48,7 +60,11 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ transactions 
       <h2 className="text-2xl font-bold mb-4">TRANSACTION ACTIVITY OVER TIME</h2>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={activityData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-          <XAxis dataKey="date" stroke="#1A1F2C" />
+          <XAxis 
+            dataKey="date" 
+            stroke="#1A1F2C" 
+            interval={Math.max(0, Math.floor(activityData.length / 8))}
+          />
           <YAxis stroke="#1A1F2C" />
           <Tooltip
             contentStyle={{
@@ -59,6 +75,16 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ transactions 
             itemStyle={{ color: '#1A1F2C' }}
             labelStyle={{ color: '#1A1F2C', fontWeight: 'bold' }}
             formatter={(value) => [`${value}`, 'Transactions']}
+            labelFormatter={(label, payload) => {
+              if (payload && payload[0] && payload[0].payload) {
+                return new Date(payload[0].payload.fullDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                });
+              }
+              return label;
+            }}
           />
           <Line
             type="monotone"
