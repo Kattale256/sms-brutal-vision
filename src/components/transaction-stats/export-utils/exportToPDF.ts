@@ -1,9 +1,11 @@
+
 import jsPDF from 'jspdf';
 import { Transaction } from '../../../services/SmsReader';
 import { 
   getTotalsByType, 
   getTotalFees, 
-  getTotalTaxes
+  getTotalTaxes,
+  getFrequentContacts
 } from '../../../utils/transactionAnalyzer';
 import { generateDocumentMetadata, generateQRCodeData } from '../../../utils/securityUtils';
 import { QuarterInfo } from '../../../utils/quarterUtils';
@@ -28,6 +30,7 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
   const totalsByType = getTotalsByType(transactions);
   const totalFees = getTotalFees(transactions);
   const totalTaxes = getTotalTaxes(transactions);
+  const frequentContacts = getFrequentContacts(transactions);
   
   const typeLabels = {
     send: 'Sent',
@@ -38,18 +41,39 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     other: 'Other'
   };
   
+  // Enhanced color mapping with more distinct colors
+  const typeColors = {
+    send: '#FF6B35', // Bright orange
+    receive: '#10B981', // Emerald green
+    payment: '#3B82F6', // Blue
+    withdrawal: '#8B5CF6', // Purple
+    deposit: '#F59E0B', // Amber
+    other: '#6B7280', // Gray
+  };
+  
   // Prepare chart data
   const chartData = Object.entries(totalsByType)
     .filter(([_, value]) => value > 0)
     .map(([type, amount]) => ({
       name: typeLabels[type as keyof typeof typeLabels],
-      amount: amount
+      amount: amount,
+      color: typeColors[type as keyof typeof typeColors] || '#6B7280'
     }));
     
   const feeTaxData = [
-    { name: 'Fees', value: totalFees },
-    { name: 'Taxes', value: totalTaxes }
+    { name: 'Fees', value: totalFees, color: '#FF5252' },
+    { name: 'Taxes', value: totalTaxes, color: '#FFC107' }
   ].filter(item => item.value > 0);
+  
+  // Prepare recipients data (top 5 without pointers)
+  const recipientsData = Object.entries(frequentContacts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([name, count], index) => ({
+      name: name || 'Unknown',
+      value: count,
+      color: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'][index % 5]
+    }));
   
   // Create PDF document
   const doc = new jsPDF();
@@ -63,55 +87,174 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
   
   let yPosition = 30;
   
-  // Period info if quarterly
+  // Period info
   if (quarterInfo) {
     doc.setFontSize(12);
     doc.text(`Uganda Financial Year: ${quarterInfo.financialYear}`, 20, yPosition);
-    yPosition += 10;
+    yPosition += 7;
+    doc.text(`Reporting Period: ${quarterInfo.label}`, 20, yPosition);
+    yPosition += 7;
+    
+    // Add quarter explanation
+    doc.setFontSize(10);
+    doc.text(`Q1: Jul-Sep | Q2: Oct-Dec | Q3: Jan-Mar | Q4: Apr-Jun`, 20, yPosition);
+    yPosition += 15;
+  } else {
+    doc.setFontSize(12);
+    doc.text(`Reporting Period: All Time (Full Financial Year)`, 20, yPosition);
+    yPosition += 15;
   }
   
-  // Transaction Breakdown Chart
+  // Transaction Breakdown Area Chart
   if (chartData.length > 0) {
     doc.setFontSize(16);
     doc.text("TRANSACTION BREAKDOWN", 20, yPosition);
     yPosition += 10;
     
-    // Create canvas for chart
+    // Create canvas for area chart
     const canvas = document.createElement('canvas');
     canvas.width = 550;
     canvas.height = 300;
     const ctx = canvas.getContext('2d');
     
     if (ctx) {
-      // Draw bar chart
-      const barWidth = 400 / chartData.length;
-      const maxValue = Math.max(...chartData.map(item => item.amount));
+      // Clear canvas
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw area chart (stacked areas)
+      const chartWidth = 400;
+      const chartHeight = 200;
+      const startX = 75;
+      const startY = 50;
+      const maxValue = chartData.reduce((sum, item) => sum + item.amount, 0);
+      
+      // Draw axes
+      ctx.strokeStyle = '#1A1F2C';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY + chartHeight);
+      ctx.lineTo(startX + chartWidth, startY + chartHeight);
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(startX, startY + chartHeight);
+      ctx.stroke();
+      
+      // Create area chart with smooth curves
+      const points = 10;
+      let cumulativeHeight = 0;
       
       chartData.forEach((item, index) => {
-        const x = 50 + index * barWidth;
-        const barHeight = (item.amount / maxValue) * 200;
+        const areaHeight = (item.amount / maxValue) * chartHeight;
         
-        // Draw bar
-        ctx.fillStyle = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'][index % 6];
-        ctx.fillRect(x, 280 - barHeight, barWidth - 10, barHeight);
+        ctx.fillStyle = item.color;
+        ctx.beginPath();
         
-        // Draw label
+        // Create smooth area curve
+        for (let i = 0; i <= points; i++) {
+          const x = startX + (i / points) * chartWidth;
+          const y = startY + chartHeight - cumulativeHeight - areaHeight * (0.8 + 0.2 * Math.sin(i * 0.5));
+          
+          if (i === 0) {
+            ctx.moveTo(x, startY + chartHeight - cumulativeHeight);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        
+        // Complete the area
+        ctx.lineTo(startX + chartWidth, startY + chartHeight - cumulativeHeight);
+        ctx.lineTo(startX, startY + chartHeight - cumulativeHeight);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add border
+        ctx.strokeStyle = '#1A1F2C';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        cumulativeHeight += areaHeight;
+      });
+      
+      // Add legend
+      let legendY = 260;
+      chartData.forEach((item, index) => {
+        const legendX = 50 + (index % 3) * 150;
+        if (index % 3 === 0 && index > 0) legendY += 20;
+        
+        // Legend color box
+        ctx.fillStyle = item.color;
+        ctx.fillRect(legendX, legendY, 12, 12);
+        ctx.strokeStyle = '#1A1F2C';
+        ctx.strokeRect(legendX, legendY, 12, 12);
+        
+        // Legend text
         ctx.fillStyle = '#000';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(item.name, x + barWidth/2 - 5, 295);
-        
-        // Draw value
-        ctx.fillText(`${item.amount.toFixed(0)} ${mainCurrency}`, x + barWidth/2 - 5, 280 - barHeight - 10);
+        ctx.font = '11px Arial';
+        ctx.fillText(`${item.name}: ${item.amount.toFixed(0)} ${mainCurrency}`, legendX + 18, legendY + 9);
       });
       
       // Add image to PDF
       doc.addImage(canvas.toDataURL(), 'PNG', 10, yPosition, 190, 100);
-      yPosition += 120;
+      yPosition += 110;
     }
   }
   
-  // Fees & Taxes Pie Chart
+  // Recipients Chart (Simple bars without pointers)
+  if (recipientsData.length > 0) {
+    doc.setFontSize(16);
+    doc.text("TOP RECIPIENTS", 20, yPosition);
+    yPosition += 10;
+    
+    // Create canvas for recipients chart
+    const canvas = document.createElement('canvas');
+    canvas.width = 550;
+    canvas.height = 250;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      // Clear canvas
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const barWidth = 60;
+      const barSpacing = 80;
+      const maxValue = Math.max(...recipientsData.map(item => item.value));
+      const chartHeight = 150;
+      const startY = 40;
+      
+      recipientsData.forEach((item, index) => {
+        const x = 50 + index * barSpacing;
+        const barHeight = (item.value / maxValue) * chartHeight;
+        const y = startY + chartHeight - barHeight;
+        
+        // Draw bar
+        ctx.fillStyle = item.color;
+        ctx.fillRect(x, y, barWidth, barHeight);
+        
+        // Draw border
+        ctx.strokeStyle = '#1A1F2C';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, barWidth, barHeight);
+        
+        // Draw value on top
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.value.toString(), x + barWidth/2, y - 5);
+        
+        // Draw name below (truncated if too long)
+        const name = item.name.length > 8 ? item.name.substring(0, 8) + '...' : item.name;
+        ctx.font = '10px Arial';
+        ctx.fillText(name, x + barWidth/2, startY + chartHeight + 15);
+      });
+      
+      // Add image to PDF
+      doc.addImage(canvas.toDataURL(), 'PNG', 10, yPosition, 190, 80);
+      yPosition += 90;
+    }
+  }
+  
+  // Fees & Taxes Pie Chart (without pointers)
   if (feeTaxData.length > 0) {
     doc.setFontSize(16);
     doc.text("FEES & TAXES", 20, yPosition);
@@ -124,10 +267,13 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     const ctx = canvas.getContext('2d');
     
     if (ctx) {
-      // Draw pie chart
+      // Clear canvas
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
       const centerX = 275;
       const centerY = 150;
-      const radius = 120;
+      const radius = 100;
       
       let total = feeTaxData.reduce((sum, item) => sum + item.value, 0);
       let startAngle = 0;
@@ -140,24 +286,26 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
         ctx.closePath();
-        ctx.fillStyle = index === 0 ? '#FF5252' : '#FFC107';
+        ctx.fillStyle = item.color;
         ctx.fill();
         
-        // Draw label line and text
-        const midAngle = startAngle + sliceAngle/2;
-        const labelX = centerX + Math.cos(midAngle) * (radius + 30);
-        const labelY = centerY + Math.sin(midAngle) * (radius + 30);
-        
-        ctx.beginPath();
-        ctx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius);
-        ctx.lineTo(labelX, labelY);
-        ctx.strokeStyle = '#000';
+        // Draw border
+        ctx.strokeStyle = '#1A1F2C';
+        ctx.lineWidth = 2;
         ctx.stroke();
         
-        ctx.fillStyle = '#000';
-        ctx.font = '12px Arial';
-        ctx.textAlign = midAngle < Math.PI ? 'left' : 'right';
-        ctx.fillText(`${item.name}: ${item.value.toFixed(2)} ${mainCurrency} (${Math.round(item.value/total*100)}%)`, labelX, labelY);
+        // Draw label directly on slice (no pointers)
+        const midAngle = startAngle + sliceAngle/2;
+        const labelRadius = radius * 0.7;
+        const labelX = centerX + Math.cos(midAngle) * labelRadius;
+        const labelY = centerY + Math.sin(midAngle) * labelRadius;
+        
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.name, labelX, labelY - 5);
+        ctx.fillText(`${item.value.toFixed(0)} ${mainCurrency}`, labelX, labelY + 10);
+        ctx.fillText(`${Math.round(item.value/total*100)}%`, labelX, labelY + 25);
         
         startAngle += sliceAngle;
       });
