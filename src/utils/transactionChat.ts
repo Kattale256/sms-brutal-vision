@@ -1,4 +1,3 @@
-
 import { Transaction } from '../services/sms/types';
 import { 
   getTotalsByType, 
@@ -10,7 +9,6 @@ import {
   getTransactionsByDate,
   getFeesByDate
 } from './transactionAnalyzer';
-import { generateMessageId } from './chat/chatTypes';
 import { 
   getSpendingPatternsByDay, 
   compareMonthToMonth, 
@@ -18,7 +16,10 @@ import {
 } from './chat/patternAnalysis';
 import { getTransactionsFromTimePeriod } from './chat/timeFilters';
 
-export { generateMessageId };
+// Generate unique message ID
+export const generateMessageId = (): string => {
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
 
 export const analyzeTransactionQuery = (
   query: string, 
