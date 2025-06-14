@@ -9,7 +9,7 @@ import ExportButtons from './ExportButtons';
 import TaxesChart from './TaxesChart';
 import QuarterSelector from './QuarterSelector';
 import { QuarterInfo } from '../../utils/quarterUtils';
-import { filterTransactionsByQuarter } from '../../utils/quarterUtils';
+import { filterTransactionsByQuarter, validateQuarterData } from '../../utils/quarterUtils';
 
 interface TransactionStatsProps {
   transactions: Transaction[];
@@ -27,23 +27,40 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
       )
     : transactions;
 
-  // Debug logging
+  // Enhanced debug logging with validation
   useEffect(() => {
+    console.log('=== TransactionStats Debug ===');
     console.log('Selected quarter:', selectedQuarter);
     console.log('Total transactions:', transactions.length);
     console.log('Filtered transactions:', filteredTransactions.length);
     
     if (selectedQuarter) {
       console.log(`Showing Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`);
-      console.log('Sample filtered transactions:', filteredTransactions.slice(0, 3).map(t => ({
-        timestamp: t.timestamp,
-        amount: t.amount,
-        quarter: `Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`
-      })));
+      // Use validation function for better debugging
+      validateQuarterData(transactions, selectedQuarter.quarter, selectedQuarter.financialYear);
     } else {
-      console.log('Showing All Time');
+      console.log('Showing All Time - no filtering applied');
     }
-  }, [selectedQuarter, transactions.length, filteredTransactions.length]);
+    
+    // Log sample transaction dates for verification
+    console.log('Sample transaction dates:', transactions.slice(0, 5).map(t => ({
+      timestamp: t.timestamp,
+      date: new Date(t.timestamp).toISOString(),
+      amount: t.amount
+    })));
+    
+    console.log('Sample filtered transaction dates:', filteredTransactions.slice(0, 5).map(t => ({
+      timestamp: t.timestamp,
+      date: new Date(t.timestamp).toISOString(),
+      amount: t.amount
+    })));
+  }, [selectedQuarter, transactions, filteredTransactions]);
+
+  // Handle quarter change with additional logging
+  const handleQuarterChange = (quarter: QuarterInfo | null) => {
+    console.log('Quarter change requested:', quarter);
+    setSelectedQuarter(quarter);
+  };
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -60,7 +77,7 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
       <QuarterSelector 
         transactions={transactions}
         selectedQuarter={selectedQuarter}
-        onQuarterChange={setSelectedQuarter}
+        onQuarterChange={handleQuarterChange}
       />
       
       {/* Transaction Summary Section */}

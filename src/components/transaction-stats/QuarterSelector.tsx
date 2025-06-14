@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Transaction } from '../../services/SmsReader';
 import { getAllQuartersInData, getCurrentQuarter, QuarterInfo } from '../../utils/quarterUtils';
@@ -20,19 +19,26 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
   const quarters = getAllQuartersInData(transactions);
   const currentQuarter = getCurrentQuarter();
   
-  // Find current quarter in data or use the most recent
+  // Enhanced initialization logic
   React.useEffect(() => {
     if (!selectedQuarter && quarters.length > 0) {
+      console.log('Initializing quarter selection...');
+      console.log('Available quarters:', quarters.map(q => q.label));
+      console.log('Current quarter:', currentQuarter.label);
+      
       // Try to find current quarter
       const current = quarters.find(q => 
         q.quarter === currentQuarter.quarter && q.financialYear === currentQuarter.financialYear
       );
       
-      // Otherwise use most recent quarter (last in sorted array)
       if (current) {
+        console.log('Setting to current quarter:', current.label);
         onQuarterChange(current);
       } else {
-        onQuarterChange(quarters[quarters.length - 1]);
+        // Otherwise use most recent quarter (last in sorted array)
+        const mostRecent = quarters[quarters.length - 1];
+        console.log('Setting to most recent quarter:', mostRecent.label);
+        onQuarterChange(mostRecent);
       }
     }
   }, [selectedQuarter, quarters, currentQuarter, onQuarterChange]);
@@ -48,21 +54,30 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
   const currentTabValue = getTabValue(selectedQuarter);
   
   const handleTabChange = (value: string) => {
+    console.log('=== Tab Change Handler ===');
     console.log('Tab change requested:', value);
+    console.log('Current tab value:', currentTabValue);
     
     if (value === 'all') {
       console.log('Setting quarter to null (All Time)');
       onQuarterChange(null);
     } else {
-      const [quarter, fyYear] = value.split('-');
+      const [quarterStr, fyYear] = value.split('-');
+      const quarterNum = parseInt(quarterStr);
+      
+      console.log('Parsing quarter:', { quarterStr, fyYear, quarterNum });
+      
       const quarterInfo = quarters.find(q => 
-        q.quarter === parseInt(quarter) && q.financialYear === fyYear
+        q.quarter === quarterNum && q.financialYear === fyYear
       );
       
       console.log('Found quarter info:', quarterInfo);
       
       if (quarterInfo) {
+        console.log('Setting quarter to:', quarterInfo.label);
         onQuarterChange(quarterInfo);
+      } else {
+        console.error('Quarter not found for value:', value);
       }
     }
   };
@@ -85,19 +100,23 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
                   All Time
                 </TabsTrigger>
               )}
-              {quarters.map((quarter) => (
-                <TabsTrigger 
-                  key={getTabValue(quarter)} 
-                  value={getTabValue(quarter)}
-                  className={`whitespace-nowrap px-3 py-2 text-sm lg:text-base ${
-                    quarter.quarter === currentQuarter.quarter && 
-                    quarter.financialYear === currentQuarter.financialYear ? 
-                    'border-2 border-neo-yellow' : ''
-                  }`}
-                >
-                  {quarter.label}
-                </TabsTrigger>
-              ))}
+              {quarters.map((quarter) => {
+                const tabValue = getTabValue(quarter);
+                const isCurrent = quarter.quarter === currentQuarter.quarter && 
+                                 quarter.financialYear === currentQuarter.financialYear;
+                
+                return (
+                  <TabsTrigger 
+                    key={tabValue} 
+                    value={tabValue}
+                    className={`whitespace-nowrap px-3 py-2 text-sm lg:text-base ${
+                      isCurrent ? 'border-2 border-neo-yellow' : ''
+                    }`}
+                  >
+                    {quarter.label}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
         </div>
@@ -115,7 +134,7 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
         )}
         {!selectedQuarter && (
           <p className="text-xs text-yellow-700 mt-1">
-            Currently showing: <strong>All Time</strong>
+            Currently showing: <strong>All Time</strong> (no filtering applied)
           </p>
         )}
       </div>
