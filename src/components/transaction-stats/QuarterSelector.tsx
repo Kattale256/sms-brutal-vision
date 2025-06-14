@@ -47,23 +47,31 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
   
   const currentTabValue = getTabValue(selectedQuarter);
   
+  const handleTabChange = (value: string) => {
+    console.log('Tab change requested:', value);
+    
+    if (value === 'all') {
+      console.log('Setting quarter to null (All Time)');
+      onQuarterChange(null);
+    } else {
+      const [quarter, fyYear] = value.split('-');
+      const quarterInfo = quarters.find(q => 
+        q.quarter === parseInt(quarter) && q.financialYear === fyYear
+      );
+      
+      console.log('Found quarter info:', quarterInfo);
+      
+      if (quarterInfo) {
+        onQuarterChange(quarterInfo);
+      }
+    }
+  };
+  
   return (
     <div className="mb-6">
       <Tabs 
         value={currentTabValue}
-        onValueChange={(value) => {
-          if (value === 'all') {
-            onQuarterChange(null);
-          } else {
-            const [quarter, fyYear] = value.split('-');
-            const quarterInfo = quarters.find(q => 
-              q.quarter === parseInt(quarter) && q.financialYear === fyYear
-            );
-            if (quarterInfo) {
-              onQuarterChange(quarterInfo);
-            }
-          }
-        }}
+        onValueChange={handleTabChange}
       >
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 gap-4">
           <h3 className="text-lg font-bold">Financial Quarter</h3>
@@ -100,6 +108,16 @@ const QuarterSelector: React.FC<QuarterSelectorProps> = ({
           <strong>Uganda's Financial Year:</strong> July 1st to June 30th<br/>
           <strong>Q1:</strong> Jul-Sep | <strong>Q2:</strong> Oct-Dec | <strong>Q3:</strong> Jan-Mar | <strong>Q4:</strong> Apr-Jun
         </p>
+        {selectedQuarter && (
+          <p className="text-xs text-yellow-700 mt-1">
+            Currently showing: <strong>{selectedQuarter.label}</strong>
+          </p>
+        )}
+        {!selectedQuarter && (
+          <p className="text-xs text-yellow-700 mt-1">
+            Currently showing: <strong>All Time</strong>
+          </p>
+        )}
       </div>
     </div>
   );

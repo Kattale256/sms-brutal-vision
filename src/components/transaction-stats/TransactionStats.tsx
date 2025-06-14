@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Transaction } from '../../services/SmsReader';
 import TransactionSummary from './TransactionSummary';
 import TransactionBreakdown from './TransactionBreakdown';
@@ -26,6 +26,19 @@ const TransactionStats: React.FC<TransactionStatsProps> = ({ transactions }) => 
         selectedQuarter.financialYear
       )
     : transactions;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Selected quarter:', selectedQuarter);
+    console.log('Total transactions:', transactions.length);
+    console.log('Filtered transactions:', filteredTransactions.length);
+    
+    if (selectedQuarter) {
+      console.log(`Showing Q${selectedQuarter.quarter} ${selectedQuarter.financialYear}`);
+    } else {
+      console.log('Showing All Time');
+    }
+  }, [selectedQuarter, transactions.length, filteredTransactions.length]);
 
   return (
     <div className="grid grid-cols-1 gap-6">

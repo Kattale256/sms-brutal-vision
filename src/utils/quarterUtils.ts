@@ -18,20 +18,21 @@ export const getQuarterInfo = (date: Date): QuarterInfo => {
   let financialYear: string;
   
   // Determine quarter in Uganda's financial year
+  // Note: getMonth() returns 0=Jan, 1=Feb, ..., 6=Jul, 7=Aug, 8=Sep, 9=Oct, 10=Nov, 11=Dec
   if (month >= 6 && month <= 8) {
-    // July-September: Q1
+    // July(6)-September(8): Q1
     quarter = 1;
     financialYear = `${year}/${year + 1}`;
   } else if (month >= 9 && month <= 11) {
-    // October-December: Q2
+    // October(9)-December(11): Q2
     quarter = 2;
     financialYear = `${year}/${year + 1}`;
   } else if (month >= 0 && month <= 2) {
-    // January-March: Q3
+    // January(0)-March(2): Q3
     quarter = 3;
     financialYear = `${year - 1}/${year}`;
   } else {
-    // April-June: Q4
+    // April(3)-June(5): Q4
     quarter = 4;
     financialYear = `${year - 1}/${year}`;
   }
@@ -102,7 +103,22 @@ export const filterTransactionsByQuarter = (
   financialYear: string
 ): Transaction[] => {
   return transactions.filter(transaction => {
-    const quarterInfo = getTransactionQuarter(transaction);
-    return quarterInfo.quarter === quarter && quarterInfo.financialYear === financialYear;
+    const transactionDate = new Date(transaction.timestamp);
+    
+    // Handle invalid dates
+    if (isNaN(transactionDate.getTime())) {
+      console.warn('Invalid transaction date:', transaction.timestamp);
+      return false;
+    }
+    
+    const quarterInfo = getQuarterInfo(transactionDate);
+    const matches = quarterInfo.quarter === quarter && quarterInfo.financialYear === financialYear;
+    
+    // Debug logging for quarter filtering
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Transaction ${transaction.timestamp}: Q${quarterInfo.quarter} ${quarterInfo.financialYear}, matches Q${quarter} ${financialYear}: ${matches}`);
+    }
+    
+    return matches;
   });
 };
