@@ -1,347 +1,214 @@
 
 import { Transaction } from '../../../services/SmsReader';
-import { 
-  getTotalsByType, 
-  getTotalFees, 
-  getTotalTaxes,
-  getFrequentContacts
-} from '../../../utils/transactionAnalyzer';
+import { ChartDataItem, RecipientDataItem } from './prepareChartData';
 
-export interface ChartColors {
-  send: string;
-  receive: string;
-  payment: string;
-  withdrawal: string;
-  deposit: string;
-  other: string;
-}
-
-export const typeColors: ChartColors = {
-  send: '#FF6B35',
-  receive: '#10B981',
-  payment: '#3B82F6',
-  withdrawal: '#8B5CF6',
-  deposit: '#F59E0B',
-  other: '#6B7280',
-};
-
-export const typeLabels = {
-  send: 'Sent',
-  receive: 'Received',
-  payment: 'Payments',
-  withdrawal: 'Withdrawals',
-  deposit: 'Deposits',
-  other: 'Other'
-};
-
-export interface ChartDataItem {
-  name: string;
-  amount: number;
-  color: string;
-}
-
-export const prepareChartData = (transactions: Transaction[]) => {
-  const totalsByType = getTotalsByType(transactions);
-  const totalFees = getTotalFees(transactions);
-  const totalTaxes = getTotalTaxes(transactions);
-  const frequentContacts = getFrequentContacts(transactions);
-  
-  const chartData = Object.entries(totalsByType)
-    .filter(([_, value]) => value > 0)
-    .map(([type, amount]) => ({
-      name: typeLabels[type as keyof typeof typeLabels],
-      amount: amount,
-      color: typeColors[type as keyof typeof typeColors] || '#6B7280'
-    }));
+// Create canvas-based chart for transaction breakdown
+export const createTransactionBreakdownChart = (chartData: ChartDataItem[]): string | null => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
     
-  const feeTaxData = [
-    { name: 'Fees', value: totalFees, color: '#FF5252' },
-    { name: 'Taxes', value: totalTaxes, color: '#FFC107' }
-  ].filter(item => item.value > 0);
-  
-  const recipientsData = Object.entries(frequentContacts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
-    .map(([name, count], index) => ({
-      name: name || 'Unknown',
-      value: count,
-      color: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'][index % 5]
-    }));
-  
-  return { chartData, feeTaxData, recipientsData, totalsByType, totalFees, totalTaxes };
-};
-
-export const createTransactionBreakdownChart = (chartData: ChartDataItem[]): string => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 550;
-  canvas.height = 350;
-  const ctx = canvas.getContext('2d');
-  
-  if (!ctx) return '';
-  
-  // Clear canvas with white background
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Chart dimensions
-  const chartWidth = 400;
-  const chartHeight = 200;
-  const startX = 75;
-  const startY = 50;
-  const maxValue = Math.max(...chartData.map(item => item.amount));
-  
-  // Draw chart background
-  ctx.fillStyle = '#F8F9FA';
-  ctx.fillRect(startX, startY, chartWidth, chartHeight);
-  
-  // Draw grid lines
-  ctx.strokeStyle = '#E9ECEF';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 5; i++) {
-    const y = startY + (i * chartHeight / 5);
-    ctx.beginPath();
-    ctx.moveTo(startX, y);
-    ctx.lineTo(startX + chartWidth, y);
-    ctx.stroke();
-  }
-  
-  // Draw axes
-  ctx.strokeStyle = '#1A1F2C';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(startX, startY + chartHeight);
-  ctx.lineTo(startX + chartWidth, startY + chartHeight);
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(startX, startY + chartHeight);
-  ctx.stroke();
-  
-  // Create stacked area chart
-  const points = 20;
-  let cumulativeValues = new Array(points + 1).fill(0);
-  
-  // Draw areas from bottom to top
-  chartData.forEach((item, dataIndex) => {
-    ctx.fillStyle = item.color + '80';
-    ctx.strokeStyle = item.color;
-    ctx.lineWidth = 2;
+    if (!ctx || chartData.length === 0) return null;
     
-    ctx.beginPath();
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    for (let i = 0; i <= points; i++) {
-      const x = startX + (i / points) * chartWidth;
-      const baseValue = cumulativeValues[i];
-      const areaHeight = (item.amount / maxValue) * chartHeight * (0.8 + 0.2 * Math.sin(i * 0.3 + dataIndex));
-      const y = startY + chartHeight - baseValue - areaHeight;
+    // Chart dimensions
+    const margin = { top: 40, right: 40, bottom: 60, left: 80 };
+    const chartWidth = canvas.width - margin.left - margin.right;
+    const chartHeight = canvas.height - margin.top - margin.bottom;
+    
+    // Calculate max value for scaling
+    const maxValue = Math.max(...chartData.map(d => d.amount));
+    const scale = chartHeight / maxValue;
+    
+    // Colors for bars
+    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
+    
+    // Draw bars
+    const barWidth = chartWidth / chartData.length * 0.8;
+    const barSpacing = chartWidth / chartData.length * 0.2;
+    
+    chartData.forEach((item, index) => {
+      const x = margin.left + index * (barWidth + barSpacing);
+      const barHeight = item.amount * scale;
+      const y = margin.top + chartHeight - barHeight;
       
-      if (i === 0) {
-        ctx.moveTo(x, startY + chartHeight - baseValue);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      // Draw bar
+      ctx.fillStyle = colors[index % colors.length];
+      ctx.fillRect(x, y, barWidth, barHeight);
       
-      cumulativeValues[i] += areaHeight;
-    }
-    
-    for (let i = points; i >= 0; i--) {
-      const x = startX + (i / points) * chartWidth;
-      const baseValue = cumulativeValues[i] - (item.amount / maxValue) * chartHeight * (0.8 + 0.2 * Math.sin(i * 0.3 + dataIndex));
-      const y = startY + chartHeight - baseValue;
-      ctx.lineTo(x, y);
-    }
-    
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  });
-  
-  // Add Y-axis labels
-  ctx.fillStyle = '#000';
-  ctx.font = '10px Arial';
-  ctx.textAlign = 'right';
-  for (let i = 0; i <= 5; i++) {
-    const value = (maxValue * (5 - i) / 5).toFixed(0);
-    const y = startY + (i * chartHeight / 5) + 4;
-    ctx.fillText(value, startX - 10, y);
-  }
-  
-  // Add legend
-  let legendY = 280;
-  let legendX = 50;
-  chartData.forEach((item, index) => {
-    if (index > 0 && index % 2 === 0) {
-      legendY += 20;
-      legendX = 50;
-    }
-    
-    ctx.fillStyle = item.color;
-    ctx.fillRect(legendX, legendY, 15, 15);
-    ctx.strokeStyle = '#1A1F2C';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(legendX, legendY, 15, 15);
-    
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 11px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`${item.name}: ${item.amount.toLocaleString()}`, legendX + 20, legendY + 11);
-    
-    legendX += 180;
-  });
-  
-  return canvas.toDataURL('image/png');
-};
-
-export const createRecipientsAreaChart = (recipientsData: any[]): string => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 550;
-  canvas.height = 300;
-  const ctx = canvas.getContext('2d');
-  
-  if (!ctx) return '';
-  
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  const chartWidth = 400;
-  const chartHeight = 180;
-  const startX = 75;
-  const startY = 40;
-  const maxValue = Math.max(...recipientsData.map(item => item.value));
-  
-  // Draw chart background
-  ctx.fillStyle = '#F8F9FA';
-  ctx.fillRect(startX, startY, chartWidth, chartHeight);
-  
-  // Draw axes
-  ctx.strokeStyle = '#1A1F2C';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(startX, startY + chartHeight);
-  ctx.lineTo(startX + chartWidth, startY + chartHeight);
-  ctx.moveTo(startX, startY);
-  ctx.lineTo(startX, startY + chartHeight);
-  ctx.stroke();
-  
-  // Create area chart for recipients
-  const points = 15;
-  recipientsData.forEach((item, dataIndex) => {
-    ctx.fillStyle = item.color + '60';
-    ctx.strokeStyle = item.color;
-    ctx.lineWidth = 3;
-    
-    ctx.beginPath();
-    
-    const areaHeight = (item.value / maxValue) * chartHeight;
-    const xOffset = (dataIndex / recipientsData.length) * chartWidth;
-    const areaWidth = chartWidth / recipientsData.length * 0.8;
-    
-    for (let i = 0; i <= points; i++) {
-      const x = startX + xOffset + (i / points) * areaWidth;
-      const heightVariation = Math.sin(i * 0.5) * 0.1 + 0.9;
-      const y = startY + chartHeight - (areaHeight * heightVariation);
+      // Draw value label on top of bar
+      ctx.fillStyle = '#000000';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      const valueText = new Intl.NumberFormat().format(item.amount);
+      ctx.fillText(valueText, x + barWidth / 2, y - 5);
       
-      if (i === 0) {
-        ctx.moveTo(x, startY + chartHeight);
-        ctx.lineTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
+      // Draw category label
+      ctx.save();
+      ctx.translate(x + barWidth / 2, margin.top + chartHeight + 20);
+      ctx.rotate(-Math.PI / 4);
+      ctx.textAlign = 'right';
+      ctx.fillText(item.name, 0, 0);
+      ctx.restore();
+    });
     
-    ctx.lineTo(startX + xOffset + areaWidth, startY + chartHeight);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    
-    // Add value label
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 12px Arial';
+    // Draw title
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'center';
-    const labelX = startX + xOffset + areaWidth / 2;
-    ctx.fillText(item.value.toString(), labelX, startY + chartHeight - areaHeight - 10);
+    ctx.fillText('Transaction Breakdown by Type', canvas.width / 2, 25);
     
-    ctx.font = '10px Arial';
-    const name = item.name.length > 10 ? item.name.substring(0, 10) + '...' : item.name;
-    ctx.fillText(name, labelX, startY + chartHeight + 15);
-  });
-  
-  return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error creating transaction breakdown chart:', error);
+    return null;
+  }
 };
 
-export const createFeeTaxPieChart = (feeTaxData: any[], mainCurrency: string): string => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 550;
-  canvas.height = 300;
-  const ctx = canvas.getContext('2d');
-  
-  if (!ctx) return '';
-  
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  const centerX = 275;
-  const centerY = 150;
-  const radius = 100;
-  
-  let total = feeTaxData.reduce((sum, item) => sum + item.value, 0);
-  let startAngle = 0;
-  
-  feeTaxData.forEach((item, index) => {
-    const sliceAngle = (item.value / total) * 2 * Math.PI;
+// Create area chart for recipients
+export const createRecipientsAreaChart = (recipientsData: RecipientDataItem[]): string | null => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d');
     
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-    gradient.addColorStop(0, item.color + 'FF');
-    gradient.addColorStop(1, item.color + '80');
+    if (!ctx || recipientsData.length === 0) return null;
     
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Chart dimensions
+    const margin = { top: 40, right: 40, bottom: 60, left: 60 };
+    const chartWidth = canvas.width - margin.left - margin.right;
+    const chartHeight = canvas.height - margin.top - margin.bottom;
+    
+    // Take top 10 recipients for readability
+    const topRecipients = recipientsData.slice(0, 10);
+    const maxValue = Math.max(...topRecipients.map(d => d.value));
+    
+    // Create area chart
     ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+    ctx.moveTo(margin.left, margin.top + chartHeight);
+    
+    topRecipients.forEach((item, index) => {
+      const x = margin.left + (index / (topRecipients.length - 1)) * chartWidth;
+      const y = margin.top + chartHeight - (item.value / maxValue) * chartHeight;
+      ctx.lineTo(x, y);
+    });
+    
+    ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
     ctx.closePath();
-    ctx.fillStyle = gradient;
+    
+    // Fill area
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
     ctx.fill();
     
-    ctx.strokeStyle = '#FFF';
-    ctx.lineWidth = 3;
+    // Draw line
+    ctx.beginPath();
+    ctx.moveTo(margin.left, margin.top + chartHeight - (topRecipients[0]?.value / maxValue) * chartHeight);
+    topRecipients.forEach((item, index) => {
+      const x = margin.left + (index / (topRecipients.length - 1)) * chartWidth;
+      const y = margin.top + chartHeight - (item.value / maxValue) * chartHeight;
+      ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
     ctx.stroke();
     
-    // Add text
-    const midAngle = startAngle + sliceAngle / 2;
-    const textRadius = radius * 0.6;
-    const textX = centerX + Math.cos(midAngle) * textRadius;
-    const textY = centerY + Math.sin(midAngle) * textRadius;
+    // Add data points (without pointers as requested)
+    topRecipients.forEach((item, index) => {
+      const x = margin.left + (index / (topRecipients.length - 1)) * chartWidth;
+      const y = margin.top + chartHeight - (item.value / maxValue) * chartHeight;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+    });
     
-    ctx.fillStyle = '#FFF';
+    // Draw title
+    ctx.fillStyle = '#000000';
     ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
+    ctx.fillText('Top Recipients - Transaction Frequency', canvas.width / 2, 25);
     
-    const percentage = Math.round((item.value / total) * 100);
-    ctx.strokeText(`${percentage}%`, textX, textY - 5);
-    ctx.fillText(`${percentage}%`, textX, textY - 5);
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error creating recipients area chart:', error);
+    return null;
+  }
+};
+
+// Create pie chart for fees and taxes
+export const createFeeTaxPieChart = (feeTaxData: { name: string; value: number }[], currency: string): string | null => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
     
-    ctx.font = 'bold 12px Arial';
-    ctx.strokeText(`${item.value.toLocaleString()} ${mainCurrency}`, textX, textY + 10);
-    ctx.fillText(`${item.value.toLocaleString()} ${mainCurrency}`, textX, textY + 10);
+    if (!ctx || feeTaxData.length === 0) return null;
     
-    startAngle += sliceAngle;
-  });
-  
-  // Add legend
-  let legendY = 260;
-  feeTaxData.forEach((item, index) => {
-    const legendX = 150 + (index * 150);
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = item.color;
-    ctx.fillRect(legendX, legendY, 20, 15);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(legendX, legendY, 20, 15);
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 120;
     
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(item.name, legendX + 25, legendY + 11);
-  });
-  
-  return canvas.toDataURL('image/png');
+    const total = feeTaxData.reduce((sum, item) => sum + item.value, 0);
+    let currentAngle = -Math.PI / 2; // Start from top
+    
+    const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6'];
+    
+    // Draw pie slices
+    feeTaxData.forEach((item, index) => {
+      const sliceAngle = (item.value / total) * 2 * Math.PI;
+      
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+      ctx.closePath();
+      ctx.fillStyle = colors[index % colors.length];
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Draw labels
+      const labelAngle = currentAngle + sliceAngle / 2;
+      const labelX = centerX + Math.cos(labelAngle) * (radius + 30);
+      const labelY = centerY + Math.sin(labelAngle) * (radius + 30);
+      
+      ctx.fillStyle = '#000000';
+      ctx.font = '12px Arial';
+      ctx.textAlign = labelX > centerX ? 'left' : 'right';
+      ctx.fillText(
+        `${item.name}: ${new Intl.NumberFormat().format(item.value)} ${currency}`,
+        labelX,
+        labelY
+      );
+      
+      currentAngle += sliceAngle;
+    });
+    
+    // Draw title
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Fees & Taxes Breakdown', centerX, 30);
+    
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error creating fee/tax pie chart:', error);
+    return null;
+  }
 };
