@@ -30,7 +30,7 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
     const mainCurrency = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
     
     // Prepare chart data using the same function as premium
-    const { chartData, feesChartData, totalsByType, totalTaxes } = prepareChartData(transactions);
+    const { feesChartData, totalsByType, totalTaxes } = prepareChartData(transactions);
     const totalFees = feesChartData.reduce((sum, item) => sum + item.fees, 0);
     
     // Create fee/tax data for pie chart
@@ -81,28 +81,28 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
     doc.text(`Total Taxes: ${totalTaxes.toLocaleString()} ${mainCurrency}`, 20, yPosition);
     yPosition += 15;
     
-    // Transaction Breakdown Chart using the same function as premium
-    if (chartData.length > 0) {
+    // Transaction Breakdown Area Chart using the corrected function
+    if (transactions.length > 0) {
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text("TRANSACTION BREAKDOWN BY TYPE", 20, yPosition);
       yPosition += 10;
       
-      console.log('Creating transaction breakdown chart for free PDF...');
-      const chartImage = createTransactionBreakdownChart(chartData);
+      console.log('Creating transaction breakdown area chart for free PDF...');
+      const chartImage = createTransactionBreakdownChart(transactions);
       if (chartImage) {
-        console.log('Chart created successfully, adding to PDF');
+        console.log('Area chart created successfully, adding to PDF');
         doc.addImage(chartImage, 'PNG', 10, yPosition, 190, 100);
         yPosition += 120;
       } else {
-        console.error('Failed to create chart for free PDF');
+        console.error('Failed to create area chart for free PDF');
         doc.setFontSize(12);
         doc.text('Chart could not be generated', 20, yPosition);
         yPosition += 20;
       }
     }
     
-    // Fees & Taxes Chart using the same function as premium
+    // Fees & Taxes Chart using the corrected function
     if (feeTaxData.length > 0) {
       if (yPosition > 200) {
         doc.addPage();
@@ -114,14 +114,14 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
       doc.text("FEES & TAXES BREAKDOWN", 20, yPosition);
       yPosition += 10;
       
-      console.log('Creating fees & taxes chart for free PDF...');
+      console.log('Creating fees & taxes pie chart for free PDF...');
       const feesTaxesImage = createFeeTaxPieChart(feeTaxData, mainCurrency);
       if (feesTaxesImage) {
-        console.log('Fees & taxes chart created successfully, adding to PDF');
+        console.log('Fees & taxes pie chart created successfully, adding to PDF');
         doc.addImage(feesTaxesImage, 'PNG', 10, yPosition, 190, 100);
         yPosition += 110;
       } else {
-        console.error('Failed to create fees & taxes chart for free PDF');
+        console.error('Failed to create fees & taxes pie chart for free PDF');
         doc.setFontSize(12);
         doc.text('Fees & taxes chart could not be generated', 20, yPosition);
         yPosition += 20;

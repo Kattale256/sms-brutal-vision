@@ -4,7 +4,6 @@ import { QuarterInfo } from '../../../utils/quarterUtils';
 import { toast } from 'sonner';
 import {
   createTransactionBreakdownChart,
-  createRecipientsAreaChart,
   createFeeTaxPieChart
 } from './pdfChartGenerator';
 import { prepareChartData } from './prepareChartData';
@@ -46,7 +45,7 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     const chartDataResult = prepareChartData(transactions);
     console.log('Chart data preparation result:', chartDataResult);
     
-    const { chartData, recipientsData, feesChartData, totalsByType, totalTaxes } = chartDataResult;
+    const { feesChartData, totalsByType, totalTaxes } = chartDataResult;
     
     // Create fee/tax data for pie chart
     const feeTaxData = [];
@@ -80,13 +79,13 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     );
     console.log('Transaction summary added, current Y position:', yPosition);
     
-    // Add transaction breakdown chart with enhanced error handling
-    console.log('Creating transaction breakdown chart...');
-    if (chartData.length > 0) {
-      console.log('Chart data available:', chartData);
-      const chartImage = createTransactionBreakdownChart(chartData);
+    // Add transaction breakdown area chart with enhanced error handling
+    console.log('Creating transaction breakdown area chart...');
+    if (transactions.length > 0) {
+      console.log('Transaction data available:', transactions.length);
+      const chartImage = createTransactionBreakdownChart(transactions);
       if (chartImage) {
-        console.log('Transaction breakdown chart created successfully');
+        console.log('Transaction breakdown area chart created successfully');
         yPosition = addChartSection(
           doc, yPosition, 
           "TRANSACTION BREAKDOWN BY TYPE (AREA CHART)", 
@@ -94,43 +93,16 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
         );
         console.log('Transaction breakdown chart added to PDF, current Y position:', yPosition);
       } else {
-        console.error('Failed to create transaction breakdown chart');
+        console.error('Failed to create transaction breakdown area chart');
         // Add error message to PDF
         doc.setFontSize(12);
         doc.text('Transaction breakdown chart could not be generated', 20, yPosition);
         yPosition += 20;
       }
     } else {
-      console.warn('No chart data available for transaction breakdown');
+      console.warn('No transaction data available for breakdown chart');
       doc.setFontSize(12);
       doc.text('No transaction data available for breakdown chart', 20, yPosition);
-      yPosition += 20;
-    }
-    
-    // Add recipients area chart with enhanced error handling
-    console.log('Creating recipients area chart...');
-    if (recipientsData.length > 0) {
-      console.log('Recipients data available:', recipientsData.slice(0, 3)); // Log first 3 for debugging
-      const recipientsImage = createRecipientsAreaChart(recipientsData);
-      if (recipientsImage) {
-        console.log('Recipients area chart created successfully');
-        yPosition = addChartSection(
-          doc, yPosition, 
-          "TOP RECIPIENTS - TRANSACTION FREQUENCY", 
-          recipientsImage,
-          190, 100
-        );
-        console.log('Recipients chart added to PDF, current Y position:', yPosition);
-      } else {
-        console.error('Failed to create recipients area chart');
-        doc.setFontSize(12);
-        doc.text('Recipients chart could not be generated', 20, yPosition);
-        yPosition += 20;
-      }
-    } else {
-      console.warn('No recipients data available for chart');
-      doc.setFontSize(12);
-      doc.text('No recipients data available for chart', 20, yPosition);
       yPosition += 20;
     }
     
