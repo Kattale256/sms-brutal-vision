@@ -34,24 +34,19 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
   }
   
   try {
-    // Get metadata and currency
+    // Get metadata and currency with enhanced logging
     console.log('Getting PDF metadata and currency...');
     const { metadata } = getPDFMetadata(transactions, quarterInfo);
     const mainCurrency = getMainCurrency(transactions);
     console.log('Main currency determined:', mainCurrency);
+    console.log('Metadata generated:', metadata);
     
     // Prepare chart data with detailed logging
     console.log('Preparing chart data...');
-    const { chartData, recipientsData, feesChartData, totalsByType, totalTaxes } = 
-      prepareChartData(transactions);
+    const chartDataResult = prepareChartData(transactions);
+    console.log('Chart data preparation result:', chartDataResult);
     
-    console.log('Chart data prepared successfully:', {
-      chartDataLength: chartData.length,
-      recipientsDataLength: recipientsData.length,
-      feesChartDataLength: feesChartData.length,
-      totalsByType,
-      totalTaxes
-    });
+    const { chartData, recipientsData, feesChartData, totalsByType, totalTaxes } = chartDataResult;
     
     // Create fee/tax data for pie chart
     const feeTaxData = [];
@@ -85,9 +80,10 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     );
     console.log('Transaction summary added, current Y position:', yPosition);
     
-    // Add transaction breakdown chart
+    // Add transaction breakdown chart with enhanced error handling
     console.log('Creating transaction breakdown chart...');
     if (chartData.length > 0) {
+      console.log('Chart data available:', chartData);
       const chartImage = createTransactionBreakdownChart(chartData);
       if (chartImage) {
         console.log('Transaction breakdown chart created successfully');
@@ -99,14 +95,22 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
         console.log('Transaction breakdown chart added to PDF, current Y position:', yPosition);
       } else {
         console.error('Failed to create transaction breakdown chart');
+        // Add error message to PDF
+        doc.setFontSize(12);
+        doc.text('Transaction breakdown chart could not be generated', 20, yPosition);
+        yPosition += 20;
       }
     } else {
       console.warn('No chart data available for transaction breakdown');
+      doc.setFontSize(12);
+      doc.text('No transaction data available for breakdown chart', 20, yPosition);
+      yPosition += 20;
     }
     
-    // Add recipients area chart
+    // Add recipients area chart with enhanced error handling
     console.log('Creating recipients area chart...');
     if (recipientsData.length > 0) {
+      console.log('Recipients data available:', recipientsData.slice(0, 3)); // Log first 3 for debugging
       const recipientsImage = createRecipientsAreaChart(recipientsData);
       if (recipientsImage) {
         console.log('Recipients area chart created successfully');
@@ -119,14 +123,21 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
         console.log('Recipients chart added to PDF, current Y position:', yPosition);
       } else {
         console.error('Failed to create recipients area chart');
+        doc.setFontSize(12);
+        doc.text('Recipients chart could not be generated', 20, yPosition);
+        yPosition += 20;
       }
     } else {
       console.warn('No recipients data available for chart');
+      doc.setFontSize(12);
+      doc.text('No recipients data available for chart', 20, yPosition);
+      yPosition += 20;
     }
     
-    // Add fees & taxes pie chart
+    // Add fees & taxes pie chart with enhanced error handling
     console.log('Creating fees & taxes pie chart...');
     if (feeTaxData.length > 0) {
+      console.log('Fee/tax data available:', feeTaxData);
       const feesTaxesImage = createFeeTaxPieChart(feeTaxData, mainCurrency);
       if (feesTaxesImage) {
         console.log('Fees & taxes pie chart created successfully');
@@ -139,16 +150,22 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
         console.log('Fees & taxes chart added to PDF, current Y position:', yPosition);
       } else {
         console.error('Failed to create fees & taxes pie chart');
+        doc.setFontSize(12);
+        doc.text('Fees & taxes chart could not be generated', 20, yPosition);
+        yPosition += 20;
       }
     } else {
       console.warn('No fees/taxes data available for pie chart');
+      doc.setFontSize(12);
+      doc.text('No fees or taxes data available for chart', 20, yPosition);
+      yPosition += 20;
     }
     
     // Add security footer
     console.log('Adding security footer...');
     addSecurityFooter(doc, yPosition, metadata);
     
-    // Generate filename and save
+    // Generate filename and save with enhanced logging
     const filename = generatePDFFilename(quarterInfo);
     console.log('Generated filename:', filename);
     

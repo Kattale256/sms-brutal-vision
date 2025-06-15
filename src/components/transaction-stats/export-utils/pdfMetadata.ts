@@ -17,13 +17,22 @@ export const generatePDFFilename = (quarterInfo?: QuarterInfo | null): string =>
   let filename = 'AKAMEME_Tax_Report';
   
   if (quarterInfo) {
+    console.log('Generating filename for quarter:', quarterInfo);
+    // Extract year components from financial year (e.g., "2023/24" -> "2023", "24")
     const fyParts = quarterInfo.financialYear.split('/');
-    filename += `_Q${quarterInfo.quarter}_${fyParts[0]}-${fyParts[1]}`;
+    const startYear = fyParts[0];
+    const endYear = fyParts[1];
+    
+    filename += `_Q${quarterInfo.quarter}_FY${startYear}-${endYear}`;
+    console.log('Generated quarter filename:', filename);
   } else {
+    console.log('Generating filename for full year');
     filename += '_Full_Year';
   }
   
-  return filename + '.pdf';
+  const finalFilename = filename + '.pdf';
+  console.log('Final filename:', finalFilename);
+  return finalFilename;
 };
 
 export const getMainCurrency = (transactions: Transaction[]): string => {
@@ -31,15 +40,17 @@ export const getMainCurrency = (transactions: Transaction[]): string => {
   transactions.forEach(t => {
     currencyMap[t.currency] = (currencyMap[t.currency] || 0) + 1;
   });
-  return Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'UGX';
+  const result = Object.entries(currencyMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'UGX';
+  console.log('Main currency determined:', result, 'from currencies:', Object.keys(currencyMap));
+  return result;
 };
 
 export const getQuarterMonths = (quarter: number): string => {
-  switch (quarter) {
-    case 1: return 'Jul-Sep';
-    case 2: return 'Oct-Dec';
-    case 3: return 'Jan-Mar';
-    case 4: return 'Apr-Jun';
-    default: return 'Unknown';
-  }
+  const months = {
+    1: 'Jul-Sep',
+    2: 'Oct-Dec', 
+    3: 'Jan-Mar',
+    4: 'Apr-Jun'
+  };
+  return months[quarter as keyof typeof months] || 'Unknown';
 };
