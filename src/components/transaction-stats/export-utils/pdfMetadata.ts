@@ -23,14 +23,16 @@ export const generatePDFFilename = (quarterInfo?: QuarterInfo | null): string =>
     const startYear = fyParts[0];
     const endYear = fyParts[1];
     
-    filename += `_Q${quarterInfo.quarter}_FY${startYear}-${endYear}`;
-    console.log('Generated quarter filename:', filename);
+    // Include month range in filename
+    const months = getQuarterMonths(quarterInfo.quarter);
+    filename += `_Q${quarterInfo.quarter}_${months}_FY${startYear}-${endYear}`;
+    console.log('Generated quarter filename with months:', filename);
   } else {
     console.log('Generating filename for full year');
-    filename += '_Full_Year';
+    filename += '_All_Time_Full_Year';
   }
   
-  const finalFilename = filename + '.pdf';
+  const finalFilename = filename.replace(/\s+/g, '_').replace(/-/g, '_') + '.pdf';
   console.log('Final filename:', finalFilename);
   return finalFilename;
 };

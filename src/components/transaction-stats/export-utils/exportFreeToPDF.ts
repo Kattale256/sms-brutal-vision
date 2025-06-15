@@ -41,28 +41,54 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
     // Create PDF document
     const doc = new jsPDF();
     
-    // Title with FREE VERSION marker
+    // Title with FREE VERSION marker and enhanced quarter information
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    const title = quarterInfo ? 
-      `AKAMEME Tax Report - ${quarterInfo.label} (FREE VERSION)` :
-      'AKAMEME Tax Report - Full Year (FREE VERSION)';
+    let title: string;
+    if (quarterInfo) {
+      // Import the getQuarterMonths function
+      const months = quarterInfo.quarter === 1 ? 'Jul-Sep' : 
+                    quarterInfo.quarter === 2 ? 'Oct-Dec' :
+                    quarterInfo.quarter === 3 ? 'Jan-Mar' : 'Apr-Jun';
+      title = `AKAMEME Tax Report - ${quarterInfo.label} (${months}) (FREE VERSION)`;
+    } else {
+      title = 'AKAMEME Tax Report - Full Year (All Time) (FREE VERSION)';
+    }
     doc.text(title, 20, 20);
     
     let yPosition = 35;
     
-    // Period info if quarterly
+    // Enhanced period info with comprehensive quarter details
     if (quarterInfo) {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
+      const months = quarterInfo.quarter === 1 ? 'Jul-Sep' : 
+                    quarterInfo.quarter === 2 ? 'Oct-Dec' :
+                    quarterInfo.quarter === 3 ? 'Jan-Mar' : 'Apr-Jun';
       doc.text(`Uganda Financial Year: ${quarterInfo.financialYear}`, 20, yPosition);
       yPosition += 7;
-      doc.text(`Quarter: Q${quarterInfo.quarter}`, 20, yPosition);
+      doc.text(`Quarter: Q${quarterInfo.quarter} (${months})`, 20, yPosition);
       yPosition += 15;
     } else {
       doc.setFontSize(12);
       doc.text('Period: Full Financial Year (All Time)', 20, yPosition);
-      yPosition += 15;
+      yPosition += 7;
+      
+      // Add comprehensive quarter summary for all-time reports
+      if (transactions.length > 0) {
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('This report includes all available transaction data across all quarters', 20, yPosition);
+        yPosition += 5;
+        
+        // Add date range
+        const dates = transactions.map(t => new Date(t.timestamp)).sort((a, b) => a.getTime() - b.getTime());
+        const earliestDate = dates[0]?.toLocaleDateString() || 'N/A';
+        const latestDate = dates[dates.length - 1]?.toLocaleDateString() || 'N/A';
+        doc.text(`Data Range: ${earliestDate} to ${latestDate}`, 20, yPosition);
+        yPosition += 10;
+        doc.setTextColor(0, 0, 0);
+      }
     }
     
     // Transaction summary
@@ -81,7 +107,7 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
     doc.text(`Total Taxes: ${totalTaxes.toLocaleString()} ${mainCurrency}`, 20, yPosition);
     yPosition += 15;
     
-    // Transaction Breakdown Area Chart using the corrected function
+    // Transaction Breakdown Area Chart using the optimized function
     if (transactions.length > 0) {
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
@@ -102,7 +128,7 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
       }
     }
     
-    // Fees & Taxes Chart using the corrected function
+    // Fees & Taxes Chart using the optimized function
     if (feeTaxData.length > 0) {
       if (yPosition > 200) {
         doc.addPage();
@@ -145,7 +171,14 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
     doc.setFont('helvetica', 'normal');
     doc.text("This is a basic free version without advanced security features.", 20, yPosition);
     yPosition += 7;
-    doc.text(`Report Period: ${quarterInfo ? quarterInfo.label : "Full Financial Year"}`, 20, yPosition);
+    
+    // Enhanced period display
+    const periodDisplay = quarterInfo ? 
+      `${quarterInfo.label} (${quarterInfo.quarter === 1 ? 'Jul-Sep' : 
+                              quarterInfo.quarter === 2 ? 'Oct-Dec' :
+                              quarterInfo.quarter === 3 ? 'Jan-Mar' : 'Apr-Jun'})` : 
+      "Full Financial Year (All Time)";
+    doc.text(`Report Period: ${periodDisplay}`, 20, yPosition);
     yPosition += 14;
     
     // Disclosure
@@ -161,10 +194,16 @@ export const exportFreeToPDF = (transactions: Transaction[], quarterInfo?: Quart
     yPosition += 14;
     doc.text(`© ${new Date().getFullYear()} FIRM D1, LDC KAMPALA`, 20, yPosition);
     
-    // Generate filename based on quarter info
-    const periodText = quarterInfo ? 
-      `_${quarterInfo.label.replace(/\//g, '_')}` : 
-      '_All_Time';
+    // Generate enhanced filename based on quarter info with months
+    let periodText = '';
+    if (quarterInfo) {
+      const months = quarterInfo.quarter === 1 ? 'Jul_Sep' : 
+                    quarterInfo.quarter === 2 ? 'Oct_Dec' :
+                    quarterInfo.quarter === 3 ? 'Jan_Mar' : 'Apr_Jun';
+      periodText = `_${quarterInfo.label.replace(/\//g, '_')}_${months}`;
+    } else {
+      periodText = '_All_Time_Full_Year';
+    }
 
     const filename = `AKAMEME_Tax_Report${periodText}_FREE.pdf`;
     console.log('Generated filename:', filename);

@@ -66,9 +66,9 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
     let yPosition = addPDFHeader(doc, quarterInfo);
     console.log('Header added, current Y position:', yPosition);
     
-    // Add period information
+    // Add period information with enhanced quarter details
     console.log('Adding period information...');
-    yPosition = addPeriodInfo(doc, yPosition, quarterInfo);
+    yPosition = addPeriodInfo(doc, yPosition, quarterInfo, transactions);
     console.log('Period info added, current Y position:', yPosition);
     
     // Add transaction summary
@@ -106,7 +106,7 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
       yPosition += 20;
     }
     
-    // Add fees & taxes pie chart with enhanced error handling
+    // Add fees & taxes pie chart with enhanced error handling and optimized sizing
     console.log('Creating fees & taxes pie chart...');
     if (feeTaxData.length > 0) {
       console.log('Fee/tax data available:', feeTaxData);
@@ -117,7 +117,7 @@ export const exportToPDF = (transactions: Transaction[], quarterInfo?: QuarterIn
           doc, yPosition, 
           "FEES & TAXES BREAKDOWN", 
           feesTaxesImage,
-          190, 100
+          190, 100 // Optimized dimensions for PDF
         );
         console.log('Fees & taxes chart added to PDF, current Y position:', yPosition);
       } else {

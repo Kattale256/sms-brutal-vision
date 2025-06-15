@@ -241,12 +241,13 @@ export const createTransactionBreakdownChart = (transactions: any[]): string | n
   }
 };
 
-// Create improved pie chart for fees and taxes matching TaxesChart.tsx exactly
+// Create optimized pie chart for fees and taxes for PDF documents
 export const createFeeTaxPieChart = (feeTaxData: { name: string; value: number }[], currency: string): string | null => {
   try {
     console.log('Creating fee/tax pie chart with data:', feeTaxData);
     
-    const canvasResult = createCanvas(400, 400);
+    // Optimized dimensions for PDF documents - wider and better proportioned
+    const canvasResult = createCanvas(600, 400);
     if (!canvasResult) return null;
     
     const { canvas, ctx } = canvasResult;
@@ -256,9 +257,10 @@ export const createFeeTaxPieChart = (feeTaxData: { name: string; value: number }
       return null;
     }
     
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = 120;
+    // Adjusted positioning for better PDF layout
+    const centerX = 200; // Move pie chart to left side
+    const centerY = 200;
+    const radius = 140; // Larger radius for better visibility
     
     const total = feeTaxData.reduce((sum, item) => sum + item.value, 0);
     if (total === 0) {
@@ -295,43 +297,53 @@ export const createFeeTaxPieChart = (feeTaxData: { name: string; value: number }
       currentAngle += sliceAngle;
     });
     
-    // Draw legend WITHOUT pointers (hideLegendPointers: true)
-    let legendY = centerY + radius + 40;
-    ctx.fillStyle = '#1A1F2C';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'center';
-    
-    feeTaxData.forEach((item) => {
-      const percentage = Math.round((item.value / total) * 100);
-      
-      // Draw color box
-      const boxX = centerX - 80;
-      ctx.fillStyle = colors[item.name] || '#6B7280';
-      ctx.fillRect(boxX, legendY - 10, 15, 15);
-      ctx.strokeStyle = '#1A1F2C';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(boxX, legendY - 10, 15, 15);
-      
-      // Draw text (same format as TaxesChart legend)
-      ctx.fillStyle = '#1A1F2C';
-      ctx.font = 'bold 12px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText(
-        `${item.name} (${item.value.toFixed(2)} ${currency})`,
-        boxX + 20,
-        legendY
-      );
-      
-      legendY += 25;
-    });
-    
     // Draw title
     ctx.fillStyle = '#1A1F2C';
-    ctx.font = 'bold 16px Arial';
+    ctx.font = 'bold 18px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('FEES & TAXES PAID', centerX, 30);
+    ctx.fillText('FEES & TAXES BREAKDOWN', canvas.width / 2, 30);
     
-    console.log('Fee/tax pie chart created successfully');
+    // Optimized horizontal legend layout for PDF
+    const legendStartX = 380; // Right side of canvas
+    const legendStartY = 120;
+    
+    feeTaxData.forEach((item, index) => {
+      const percentage = Math.round((item.value / total) * 100);
+      const yOffset = index * 60; // Vertical spacing between legend items
+      
+      // Draw larger color box for better visibility
+      const boxX = legendStartX;
+      const boxY = legendStartY + yOffset;
+      ctx.fillStyle = colors[item.name] || '#6B7280';
+      ctx.fillRect(boxX, boxY, 20, 20);
+      ctx.strokeStyle = '#1A1F2C';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(boxX, boxY, 20, 20);
+      
+      // Draw text with better formatting
+      ctx.fillStyle = '#1A1F2C';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'left';
+      
+      // Item name
+      ctx.fillText(item.name, boxX + 30, boxY + 15);
+      
+      // Amount and percentage on separate line
+      ctx.font = '12px Arial';
+      ctx.fillText(
+        `${item.value.toLocaleString()} ${currency} (${percentage}%)`,
+        boxX + 30,
+        boxY + 35
+      );
+    });
+    
+    // Add summary information
+    ctx.fillStyle = '#666666';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Total: ${total.toLocaleString()} ${currency}`, legendStartX, legendStartY + (feeTaxData.length * 60) + 20);
+    
+    console.log('Fee/tax pie chart created successfully with optimized PDF layout');
     return canvas.toDataURL('image/png');
   } catch (error) {
     console.error('Error creating fee/tax pie chart:', error);

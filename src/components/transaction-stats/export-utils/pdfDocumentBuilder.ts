@@ -1,8 +1,22 @@
 
 import jsPDF from 'jspdf';
 import { Transaction } from '../../../services/SmsReader';
-import { QuarterInfo } from '../../../utils/quarterUtils';
+import { QuarterInfo, getAllQuartersInData } from '../../../utils/quarterUtils';
 import { getQuarterMonths } from './pdfMetadata';
+
+// Generate comprehensive all-time quarter summary
+const generateAllTimeQuarterSummary = (transactions: Transaction[]): string => {
+  const quarters = getAllQuartersInData(transactions);
+  
+  if (quarters.length === 0) return 'No quarter data available';
+  
+  const quarterSummaries = quarters.map(q => {
+    const months = getQuarterMonths(q.quarter);
+    return `${q.label} (${months})`;
+  });
+  
+  return quarterSummaries.join(' | ');
+};
 
 export const createPDFDocument = (): jsPDF => {
   return new jsPDF();
@@ -18,9 +32,10 @@ export const addPDFHeader = (
   
   let title: string;
   if (quarterInfo) {
-    title = `AKAMEME TAX APP Report - ${quarterInfo.label}`;
+    const months = getQuarterMonths(quarterInfo.quarter);
+    title = `AKAMEME TAX APP Report - ${quarterInfo.label} (${months})`;
   } else {
-    title = 'AKAMEME TAX APP - Full Year Report';
+    title = 'AKAMEME TAX APP - Full Year Report (All Time)';
   }
   
   console.log('Adding PDF header with title:', title);
@@ -32,15 +47,17 @@ export const addPDFHeader = (
 export const addPeriodInfo = (
   doc: jsPDF, 
   yPosition: number, 
-  quarterInfo?: QuarterInfo | null
+  quarterInfo?: QuarterInfo | null,
+  transactions?: Transaction[]
 ): number => {
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 100, 0);
   
   if (quarterInfo) {
+    const months = getQuarterMonths(quarterInfo.quarter);
     console.log('Adding quarter period info:', quarterInfo);
-    doc.text(`REPORTING PERIOD: ${quarterInfo.label}`, 20, yPosition);
+    doc.text(`REPORTING PERIOD: ${quarterInfo.label} (${months})`, 20, yPosition);
     yPosition += 8;
     
     doc.setFontSize(12);
@@ -49,17 +66,16 @@ export const addPeriodInfo = (
     doc.text(`Uganda Financial Year: ${quarterInfo.financialYear}`, 20, yPosition);
     yPosition += 6;
     
-    const quarterMonths = getQuarterMonths(quarterInfo.quarter);
-    doc.text(`Quarter Details: Q${quarterInfo.quarter} (${quarterMonths})`, 20, yPosition);
+    doc.text(`Quarter Details: Q${quarterInfo.quarter} - ${months}`, 20, yPosition);
     yPosition += 6;
     
-    // Add specific quarter explanation
+    // Add specific quarter explanation with months
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(`This report covers Q${quarterInfo.quarter} of FY ${quarterInfo.financialYear}`, 20, yPosition);
+    doc.text(`This report covers Q${quarterInfo.quarter} of FY ${quarterInfo.financialYear} (${months})`, 20, yPosition);
     yPosition += 12;
   } else {
-    console.log('Adding full year period info');
+    console.log('Adding full year period info with comprehensive quarter summary');
     doc.text(`REPORTING PERIOD: Full Financial Year (All Time)`, 20, yPosition);
     yPosition += 8;
     
@@ -67,10 +83,44 @@ export const addPeriodInfo = (
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text(`Showing all transactions across all quarters and years`, 20, yPosition);
-    yPosition += 12;
+    yPosition += 8;
+    
+    // Add comprehensive quarter summary for all-time reports
+    if (transactions && transactions.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 50, 100);
+      doc.text('QUARTERS INCLUDED IN THIS REPORT:', 20, yPosition);
+      yPosition += 6;
+      
+      const quarterSummary = generateAllTimeQuarterSummary(transactions);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      
+      // Split long quarter summary into multiple lines if needed
+      const maxWidth = 170; // Maximum text width
+      const lines = doc.splitTextToSize(quarterSummary, maxWidth);
+      lines.forEach((line: string) => {
+        doc.text(line, 20, yPosition);
+        yPosition += 5;
+      });
+      
+      yPosition += 5;
+      
+      // Add date range information
+      const dates = transactions.map(t => new Date(t.timestamp)).sort((a, b) => a.getTime() - b.getTime());
+      const earliestDate = dates[0]?.toLocaleDateString() || 'N/A';
+      const latestDate = dates[dates.length - 1]?.toLocaleDateString() || 'N/A';
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Data Range: ${earliestDate} to ${latestDate}`, 20, yPosition);
+      yPosition += 8;
+    }
   }
   
-  // Quarter explanation
+  // Quarter explanation with month ranges
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
   doc.text(`Uganda FY Quarters: Q1 (Jul-Sep) | Q2 (Oct-Dec) | Q3 (Jan-Mar) | Q4 (Apr-Jun)`, 20, yPosition);
