@@ -93,7 +93,9 @@ export const addChartSection = (
   width: number = 190,
   height: number = 120
 ): number => {
+  // Check if we need a new page
   if (yPosition > 200) {
+    console.log('Adding new page for chart:', title);
     doc.addPage();
     yPosition = 20;
   }
@@ -103,7 +105,17 @@ export const addChartSection = (
   doc.text(title, 20, yPosition);
   yPosition += 10;
   
-  doc.addImage(imageData, 'PNG', 10, yPosition, width, height);
+  try {
+    doc.addImage(imageData, 'PNG', 10, yPosition, width, height);
+    console.log(`Chart "${title}" added successfully at position:`, yPosition);
+  } catch (error) {
+    console.error(`Error adding chart "${title}" to PDF:`, error);
+    // Add error text instead of image
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Error: Could not generate ${title.toLowerCase()}`, 20, yPosition + 20);
+    height = 40; // Adjust height for error text
+  }
   
   return yPosition + height + 10;
 };
