@@ -175,8 +175,8 @@ const Auth = () => {
                 <TabsContent value="signup" className="mt-6">
                   <form onSubmit={handleSignup} className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name" className="text-sm font-semibold text-gray-700">Full Name</Label>
-                      <Input id="signup-name" type="text" placeholder="Enter your full name" value={signupData.fullName} onChange={e => setSignupData({
+                      <Label htmlFor="signup-name" className="text-sm font-semibold text-gray-700">User Name</Label>
+                      <Input id="signup-name" type="text" placeholder="Enter your user name" value={signupData.fullName} onChange={e => setSignupData({
                       ...signupData,
                       fullName: e.target.value
                     })} disabled={isLoading} className="h-12 border-2 border-gray-200 rounded-xl focus:border-neo-yellow focus:ring-0 transition-colors font-medium" />
