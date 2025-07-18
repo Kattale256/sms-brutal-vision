@@ -5,7 +5,6 @@ import { Transaction } from '../services/sms/types';
 import { Clipboard, Smartphone } from 'lucide-react';
 import QuickTip from './QuickTip';
 import AISecurityBadge from './AISecurityBadge';
-
 const Header: React.FC<{
   onSmsImport?: (messages: any[]) => void;
   onTransactionsImport?: (transactions: Transaction[]) => void;
@@ -92,8 +91,7 @@ const Header: React.FC<{
       });
     }
   };
-  return (
-    <>
+  return <>
       {/* AI Security Badge at the top */}
       <div className="flex justify-center mb-4">
         <AISecurityBadge />
@@ -102,10 +100,8 @@ const Header: React.FC<{
       <header className="border-b-4 border-neo-black mb-6 pb-6 bg-white rounded-lg shadow-neo">
         <div className="flex flex-col gap-4">
           <div className="text-center lg:text-left">
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black text-center">
-              AKAMEME TAX APP 
-            </h1>
-            <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">The Safe & Easy App Extracting Tax Insights For You From Your Mobile Money Transactions </p>
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tighter text-neo-black text-center">AKAMEME AKAMOMO TAX APP</h1>
+            <p className="text-neo-gray font-medium mt-2 text-sm lg:text-base text-center">The Safe & Easy App For Your MoMo Tax Insights </p>
           </div>
           
           {/* Quick Tip Section */}
@@ -153,8 +149,6 @@ const Header: React.FC<{
             </div>
           </div>}
       </header>
-    </>
-  );
+    </>;
 };
-
 export default Header;
