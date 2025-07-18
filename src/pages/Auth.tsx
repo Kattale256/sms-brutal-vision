@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Smartphone } from 'lucide-react';
 import AISecurityBadge from '@/components/AISecurityBadge';
-
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
@@ -140,8 +139,7 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-  return (
-    <div className="min-h-screen bg-silver-light flex flex-col">
+  return <div className="min-h-screen bg-silver-light flex flex-col">
       {/* AI Security Badge at the very top */}
       <div className="flex justify-center pt-4 pb-2">
         <AISecurityBadge />
@@ -153,8 +151,10 @@ const Auth = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-neo-yellow rounded-3xl border-4 border-neo-black shadow-neo-sm mb-6">
               <Smartphone className="h-10 w-10 text-neo-black" />
             </div>
-            <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME TAX APP</h1>
-            <p className="text-gray-600 font-medium text-center">Know The Tax On Your Transactions  
+            <h1 className="text-3xl font-bold text-neo-black mb-2 tracking-tight">AKAMEME
+AKAMOMO
+TAX APP</h1>
+            <p className="text-gray-600 font-medium text-center">Know The Tax On Your Mobile Money Transactions
 - Safely & Easily -</p>
           </div>
 
@@ -243,8 +243,6 @@ const Auth = () => {
           <AISecurityBadge variant="minimal" />
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Auth;
