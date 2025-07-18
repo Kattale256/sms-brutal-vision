@@ -13,7 +13,7 @@ export const getTotalsByType = (transactions: Transaction[]): Record<string, num
   
   transactions.forEach(transaction => {
     const type = transaction.type || 'other';
-    totals[type] = (totals[type] || 0) + transaction.amount;
+    totals[type] = (totals[type] || 0) + Math.round(transaction.amount);
   });
   
   return totals;
@@ -31,7 +31,7 @@ export const getBalanceHistory = (transactions: Transaction[]): Record<string, n
   sortedTransactions.forEach(transaction => {
     if (transaction.balance !== undefined) {
       const date = new Date(transaction.timestamp).toISOString().split('T')[0];
-      history[date] = transaction.balance;
+      history[date] = Math.round(transaction.balance);
     }
   });
   
@@ -39,21 +39,27 @@ export const getBalanceHistory = (transactions: Transaction[]): Record<string, n
 };
 
 export const getTotalFees = (transactions: Transaction[]): number => {
-  return transactions
-    .filter(transaction => transaction.fee !== undefined)
-    .reduce((total, transaction) => total + (transaction.fee || 0), 0);
+  return Math.round(
+    transactions
+      .filter(transaction => transaction.fee !== undefined)
+      .reduce((total, transaction) => total + (transaction.fee || 0), 0)
+  );
 };
 
 export const getTotalTaxes = (transactions: Transaction[]): number => {
-  return transactions
-    .filter(transaction => transaction.tax !== undefined)
-    .reduce((total, transaction) => total + (transaction.tax || 0), 0);
+  return Math.round(
+    transactions
+      .filter(transaction => transaction.tax !== undefined)
+      .reduce((total, transaction) => total + (transaction.tax || 0), 0)
+  );
 };
 
 export const getTotalIncome = (transactions: Transaction[]): number => {
-  return transactions
-    .filter(transaction => transaction.type === 'receive' || transaction.type === 'deposit')
-    .reduce((total, transaction) => total + transaction.amount, 0);
+  return Math.round(
+    transactions
+      .filter(transaction => transaction.type === 'receive' || transaction.type === 'deposit')
+      .reduce((total, transaction) => total + transaction.amount, 0)
+  );
 };
 
 export const getFeesByDate = (transactions: Transaction[]): Record<string, number> => {
@@ -62,7 +68,7 @@ export const getFeesByDate = (transactions: Transaction[]): Record<string, numbe
   transactions.forEach(transaction => {
     if (transaction.fee !== undefined && transaction.fee > 0) {
       const date = new Date(transaction.timestamp).toISOString().split('T')[0];
-      feesByDate[date] = (feesByDate[date] || 0) + transaction.fee;
+      feesByDate[date] = Math.round((feesByDate[date] || 0) + transaction.fee);
     }
   });
   
@@ -122,7 +128,7 @@ export const getAverageTransactionAmount = (transactions: Transaction[]): Record
   
   const averages: Record<string, number> = {};
   Object.entries(totals).forEach(([type, {sum, count}]) => {
-    averages[type] = count > 0 ? sum / count : 0;
+    averages[type] = count > 0 ? Math.round(sum / count) : 0;
   });
   
   return averages;

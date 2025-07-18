@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { isValidTransactionDate } from '../utils/transactionDateUtils';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -205,9 +206,13 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
                 const subcategories = categorization?.category === 'business-income' 
                   ? BUSINESS_INCOME_SUBCATEGORIES 
                   : BUSINESS_EXPENSE_SUBCATEGORIES;
+                const hasValidDate = isValidTransactionDate(transaction);
                 
                 return (
-                  <TableRow key={transaction.id}>
+                  <TableRow 
+                    key={transaction.id}
+                    className={!hasValidDate ? 'bg-red-50 border-red-200' : ''}
+                  >
                     <TableCell>{idx + 1}</TableCell>
                     <TableCell className="font-medium">
                       {typeLabels[transaction.type as keyof typeof typeLabels]}
@@ -218,24 +223,30 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
                         : 'text-red-600 font-bold'
                     }>
                       {transaction.type === 'receive' || transaction.type === 'deposit' ? '+' : '-'}
-                      {transaction.amount.toFixed(2)} {transaction.currency}
+                      {Math.round(transaction.amount)} {transaction.currency}
                     </TableCell>
                     <TableCell>
-                      {new Date(transaction.timestamp).toLocaleDateString()} 
-                      {' '}
-                      {new Date(transaction.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {hasValidDate ? (
+                        <>
+                          {new Date(transaction.timestamp).toLocaleDateString()} 
+                          {' '}
+                          {new Date(transaction.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </>
+                      ) : (
+                        <span className="text-red-600 font-bold">⚠️ NO DATE</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {transaction.reference || 'N/A'}
                     </TableCell>
                     <TableCell>
                       {transaction.fee !== undefined && transaction.fee > 0 ? (
-                        <span className="text-amber-600">{transaction.fee.toFixed(2)} {transaction.currency}</span>
+                        <span className="text-amber-600">{Math.round(transaction.fee)} {transaction.currency}</span>
                       ) : 'None'}
                     </TableCell>
                     <TableCell>
                       {transaction.tax !== undefined && transaction.tax > 0 ? (
-                        <span className="text-amber-600">{transaction.tax.toFixed(2)} {transaction.currency}</span>
+                        <span className="text-amber-600">{Math.round(transaction.tax)} {transaction.currency}</span>
                       ) : 'None'}
                     </TableCell>
                     <TableCell>
